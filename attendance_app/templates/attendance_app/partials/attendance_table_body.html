@@ -1,0 +1,54 @@
+{% load static %} {# Required for static files like default_avatar.png if used here #}
+
+{# This partial should ONLY contain the table rows (<tr>) and the {% for %} loop. #}
+{# The <tbody> tags are expected to be in the parent template (attendance_report.html). #}
+{% for record in attendance_records %}
+    <tr class="hover:bg-gray-50">
+        {# Employee Name #}
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center">
+            {{ record.employee_name }}
+        </td>
+        {# Employee ID #}
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ record.employee_id }}
+        </td>
+        {# Date #}
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ record.date }}
+        </td>
+        {# In Time #}
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ record.in_time|default:"-" }}
+        </td>
+        {# Out Time #}
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ record.out_time|default:"-" }}
+        </td>
+        {# Lunch-in Time #}
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ record.lunch_in_time|default:"-" }}
+        </td>
+        {# Lunch-out Time #}
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ record.lunch_out_time|default:"-" }}
+        </td>
+        {# Total Break Duration #}
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ record.total_break_hours|default:"-" }}
+        </td>
+        {# Total Working Hours #}
+        <td class="working-hours px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ record.total_working_hours|default:'In progress...' }}
+        </td>
+        {# Overtime Hours #}
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ record.overtime_hours|default:"0.00" }} hours
+        </td>
+    </tr>
+    {% empty %}
+    {# Message displayed when no records are found #}
+    {# colspan is now 10 to match the 10 <th> elements in thead #}
+    <tr>
+        <td colspan="10" class="px-6 py-4 text-center text-gray-500">No records found matching your criteria.</td>
+    </tr>
+{% endfor %}

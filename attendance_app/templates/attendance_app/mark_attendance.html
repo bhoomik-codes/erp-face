@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Mark Attendance</title>
+    {% load static %}
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F8F8;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #1A1A1A;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-text {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: #EF4444;
+        }
+
+        .logo-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .datetime-section {
+            font-size: 1rem;
+            color: white;
+        }
+
+        .main-container {
+            margin-top: 90px;
+            flex-grow: 1;
+            padding: 1rem;
+            max-width: 1000px;
+            width: 75%;
+            margin-left: auto;
+            margin-right: auto;
+            background-color: #ffffff;
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .content-grid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+            max-width: 1000px;
+            max-height: 720px;
+        }
+
+        .video-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1000px;
+            position: relative;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-top: 75%;
+            background-color: #000;
+            overflow: hidden;
+            border-radius: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .video-container video, .video-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .face-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 80%;
+            max-width: 350px;
+            max-height: 400px;
+            border: 4px solid #22C55E;
+            border-radius: 18px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            z-index: 5;
+            animation: pulse-border 2s infinite alternate;
+        }
+
+        @keyframes pulse-border {
+            0% {
+                border-color: #22C55E;
+                box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            }
+            100% {
+                border-color: #16A34A;
+                box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+            }
+        }
+
+        #status_message {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            font-size: 0.9rem;
+            text-align: center;
+            z-index: 10;
+            box-sizing: border-box;
+            min-height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #cameraButton {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #22C55E;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        #cameraButton:hover {
+            background-color: #16A34A;
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        .controls-panel {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+            color: #333;
+        }
+
+        .input-display {
+            background-color: #EFEFEF;
+            padding: 1rem 1.25rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            color: #1A1A1A;
+            font-size: 1.5rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .company-logo-bottom {
+            margin-top: 2.5rem;
+            text-align: center;
+        }
+
+        .company-logo-bottom img {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            border-radius: 50%;
+            outline: 2px solid #EF4444;
+            outline-offset: 4px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-info, .status-success, .status-warning, .status-error, .status-no-face {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+            border: 1px solid;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .status-info {
+            background-color: rgba(224, 242, 254, 0.8);
+            color: #026AA2;
+            border-color: #60A5FA;
+        }
+
+        .status-success {
+            background-color: rgba(209, 250, 229, 0.8);
+            color: #065F46;
+            border-color: #34D399;
+        }
+
+        .status-warning {
+            background-color: rgba(255, 251, 235, 0.8);
+            color: #9A3412;
+            border-color: #F59E0B;
+        }
+
+        .status-error, .status-no-face {
+            background-color: rgba(254, 226, 226, 0.8);
+            color: #DC2626;
+            border-color: #EF4444;
+        }
+
+
+        .recent-records-section {
+            background-color: #ffffff;
+            padding: 1.5rem;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+            margin-top: 1.5rem;
+        }
+
+        .recent-records-section h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #1A1A1A;
+        }
+
+        .recent-records-scroll-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            padding-bottom: 1rem;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: thin;
+            scrollbar-color: #EF4444 #f1f1f1;
+        }
+
+        .recent-records-scroll-container::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .recent-records-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .recent-records-scroll-container::-webkit-scrollbar-thumb {
+            background: #EF4444;
+            border-radius: 10px;
+        }
+
+        .recent-records-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #DC2626;
+        }
+
+        .popup-container {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            position: relative;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .popup-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .record-card {
+            flex: 0 0 250px;
+            background-color: #FDFDFD;
+            border: 1px solid #E0E0E0;
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease;
+            scroll-snap-align: start;
+        }
+
+        .record-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .record-card .employee-card-header {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: 0.75rem;
+            border-bottom: 1px dashed #D1D5DB;
+            padding-bottom: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .record-card .employee-photo {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #EF4444;
+            outline: 2px solid rgba(239, 68, 68, 0.2);
+            outline-offset: 2px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .record-card .employee-info-header {
+            font-size: 0.9rem;
+        }
+
+        .record-card .employee-info-header .name-and-tag {
+            margin-bottom: 0.2rem;
+        }
+
+        .record-card .employee-info-header span {
+            font-size: 0.8rem;
+            color: #4A4A4A;
+        }
+
+        .record-card .employee-info-header strong {
+            font-weight: 700;
+            color: #1A1A1A;
+        }
+
+        .record-card .employee-card-details {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .record-card .employee-card-details div {
+            padding-bottom: 0.2rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .record-card .employee-card-details strong {
+            font-weight: 600;
+        }
+
+        .no-recent-records {
+            padding: 1.5rem;
+            font-size: 1rem;
+            font-style: normal;
+            border: 2px dashed #D1D5DB;
+            background-color: #FDFDFD;
+        }
+
+        .late-tag {
+            background-color: #EF4444;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .popup {
+            position: fixed;
+            top: 10%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            color: #fff;
+            text-align: center;
+            z-index: 9999;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+            0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            animation: fadeInOut 4s forwards;
+            pointer-events: none;
+        }
+
+        .popup--success {
+            background-color: rgba(76, 175, 80, 0.85);
+        }
+
+        .popup--late {
+            background-color: rgba(248, 113, 113, 0.85);
+        }
+
+        .popup--camera {
+            background-color: rgba(106, 104, 104, 0.85);
+        }
+
+        .popup--recognized-face {
+            background-color: rgba(157, 198, 117, 0.85);
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+
+        .scroll-arrows {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 1.5rem;
+        }
+
+        .scroll-arrow {
+            background-color: #EF4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .scroll-arrow:hover {
+            background-color: #DC2626;
+            transform: scale(1.1);
+        }
+    </style>
+    {% block head_extra %}
+
+    {% endblock %}
+</head>
+<body class="bg-light-gray-bg">
+<header>
+    <div class="logo-section">
+        <img src="{% static 'img/vidhemalogo.webp' %}" alt="Company Logo" class="h-10 w-auto">
+    </div>
+    <div class="datetime-section" id="currentDateTime">
+    </div>
+</header>
+
+<div class="main-container">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <div id="loading" class="text-gray-600 mb-6 text-xl text-center">Loading recognition models...</div>
+
+    <div class="content-grid">
+        <div class="video-section">
+            <section id="demos" class="flex flex-col items-center w-full">
+                <div class="video-container relative">
+                    <video id="webcam" autoplay playsinline></video>
+                    <canvas id="output_canvas" class="canvas"></canvas>
+                    <div class="face-overlay" style="display: none;">
+                    </div>
+                    <div id="status_message" class="status-info" style="display: none;">Awaiting camera access...</div>
+                    <button id="cameraButton" class="lg:hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                            <path d="M12 9a3 3 0 100 6 3 3 0 000-6z"/>
+                            <path fill-rule="evenodd"
+                                  d="M9.302 2.25a.75.75 0 01.722.568l.815 2.862A3.752 3.752 0 0012 7.5c.473 0 .923.082 1.343.23l.815-2.862a.75.75 0 01.722-.568h3.622c.51 0 .937.405.962.913l.858 12.047a2.25 2.25 0 01-2.27 2.413H2.25c-1.102 0-2-.898-2-2L.05 3.163A.75.75 0 01.772 2.25h3.622a.75.75 0 01.722.568l.815 2.862A3.752 3.752 0 009.75 7.5c-.473 0-.923-.082-1.343-.23L7.592 4.08a.75.75 0 01.722-.568h3.622zM4.5 14.25a.75.75 0 00-.75.75v.008c0 .414.336.75.75.75h.008a.75.75 0 00.75-.75v-.008a.75.75 0 00-.75-.75H4.5z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="gesture_output" class="hidden w-full text-lg mt-4" style="display: none;"></div>
+            </section>
+            <div id="employeeIdDisplay" class="input-display mt-4 w-full max-w-sm hidden">
+                Waiting for scan...
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="input-group">
+                <label for="employeeIdDisplay">RECOGNIZED EMPLOYEE:</label>
+                <div id="employeeIdDisplay_hidden" class="input-display">
+                    Waiting for scan...
+                </div>
+            </div>
+            <p id="status" class="status-info hidden"></p>
+
+            <button onclick="openPopup()">Show Image</button>
+
+            <div class="popup-container" id="popup">
+                <div class="popup-content">
+                    <button class="close-btn" onclick="closePopup()">×</button>
+                    <img src="{% static 'img/qr.png' %}" alt="Popup Image">
+                </div>
+            </div>
+            <div class="company-logo-bottom">
+                <img src="{% static 'img/main_logo.webp' %}" alt="Company Logo">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="recent-records-section">
+    <div id="recentRecordsScrollContainer" class="recent-records-scroll-container">
+        {% include 'attendance_app/partials/recent_records.html' with records=recent_records %}
+        <div class="no-recent-records" id="noRecentRecordsMessage">No recent records found.</div>
+    </div>
+</div>
+
+<script>
+    function openPopup() {
+        document.getElementById('popup').style.display = 'flex';
+        updateRecentRecords();
+    }
+
+    function closePopup() {
+        document.getElementById('popup').style.display = 'none';
+    }
+
+    window.FACE_API_MODELS_URL = "{% static 'models' %}";
+</script>
+
+<script type="module" src="{% static 'js/scripts.js' %}"></script>
+</body>
+</html>

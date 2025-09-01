@@ -1,0 +1,306 @@
+{% extends 'attendance_app/dashboard.html' %}
+{% load static %}
+{% load widget_tweaks %} {# Load widget_tweaks to add classes to form fields #}
+{% block title %}Register Employee - VIDHEMA{% endblock %}
+
+{% block page_heading %}Register New Employee{% endblock %}
+
+{% block content %}
+    {% with current_page='register_employee' %}
+        <div class="container">
+            <h2 class="text-3xl font-bold mb-6 text-gray-800 text-center">Register Employee</h2>
+
+            <form method="post" enctype="multipart/form-data" class="space-y-5" id="employee-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <ul class="errorlist">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}">Name:</label>
+                    {{ form.name|add_class:"w-full" }}
+                    {% if form.name.errors %}
+                        <ul class="errorlist">{% for error in form.name.errors %}
+                            <li>{{ error }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.employee_id.id_for_label }}">Employee ID:</label>
+                    {{ form.employee_id|add_class:"w-full" }}
+                    {% if form.employee_id.errors %}
+                        <ul class="errorlist">{% for error in form.employee_id.errors %}
+                            <li>{{ error }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.photo.id_for_label }}">Profile Photo:</label>
+                    {{ form.photo|add_class:"w-full" }}
+                    {% if form.photo.errors %}
+                        <ul class="errorlist">{% for error in form.photo.errors %}
+                            <li>{{ error }}</li>{% endfor %}</ul>
+                    {% endif %}
+                    <p class="text-sm text-gray-500 mt-1">A clear photo of the employee's face is required for
+                        recognition.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.role.id_for_label }}">Role:</label>
+                    {{ form.role|add_class:"w-full" }}
+                    {% if form.role.errors %}
+                        <ul class="errorlist">{% for error in form.role.errors %}
+                            <li>{{ error }}</li>{% endfor %}</ul>
+                    {% endif %}
+                    <p class="text-sm text-gray-500 mt-1">{{ form.role.help_text }}</p>
+                </div>
+
+                {# Team Members Selection UI #}
+                <div class="form-group" id="team-members-group" style="display: none;">
+                    <label for="id_team_members">Team Members:</label>
+                    <p class="text-sm text-gray-500 mb-2">{{ form.team_members.help_text }}</p>
+
+                    {# Hidden SelectMultiple field for Django to process #}
+                    {# This field is now hidden by its class defined in forms.py #}
+                    {{ form.team_members }}
+
+                    <div class="flex flex-col md:flex-row gap-4 mt-2">
+                        {# Available Members List #}
+                        <div id="available-members-dropzone"
+                             class="flex-1 bg-gray-50 p-4 rounded-md shadow-inner border border-gray-200 min-h-[10rem]"
+                             ondragover="allowDrop(event)" ondrop="drop(event, 'available')">
+                            <h4 class="font-semibold text-gray-700 mb-3">Available Employees:</h4>
+                            <ul id="available-members-list" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                                {# Populated by JavaScript #}
+                            </ul>
+                            {% if form.team_members.errors %}
+                                <ul class="errorlist">{% for error in form.team_members.errors %}
+                                    <li>{{ error }}</li>{% endfor %}</ul>
+                            {% endif %}
+                        </div>
+
+                        {# No Action Buttons needed for Drag & Drop #}
+                        <div class="hidden md:flex flex-col items-center justify-center gap-2">
+                            <i class="fa-solid fa-arrows-left-right text-gray-400 text-2xl"></i>
+                            <span class="text-gray-500 text-sm">Drag & Drop</span>
+                        </div>
+
+
+                        {# Selected Members List #}
+                        <div id="selected-members-dropzone"
+                             class="flex-1 bg-blue-50 p-4 rounded-md shadow-inner border border-blue-200 min-h-[10rem]"
+                             ondragover="allowDrop(event)" ondrop="drop(event, 'selected')">
+                            <h4 class="font-semibold text-gray-700 mb-3">Selected Team Members:</h4>
+                            <ul id="selected-members-list" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                                {# Populated by JavaScript #}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <a href="{% url 'attendance_app:employee_list' %}" class="back-btn">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> Back to List
+                    </a>
+                    <button type="submit" class="register-btn">
+                        <i class="fa-solid fa-user-plus mr-2"></i> Register Employee
+                    </button>
+                </div>
+            </form>
+        </div>
+    {% endwith %}
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        let draggedItemId = null; // Global variable to store the ID of the dragged item
+
+        function allowDrop(event) {
+            event.preventDefault(); // Necessary to allow dropping
+        }
+
+        function drag(event) {
+            draggedItemId = event.target.dataset.id;
+            event.dataTransfer.setData("text/plain", draggedItemId); // Set data for cross-browser compatibility
+            event.dataTransfer.effectAllowed = "move";
+            // Add a class to the dragged item for visual feedback
+            event.target.classList.add('opacity-50', 'border-dashed', 'border-2', 'border-indigo-500');
+        }
+
+        function drop(event, targetListType) {
+            event.preventDefault();
+            const data = event.dataTransfer.getData("text/plain");
+            const draggedItem = document.querySelector(`li[data-id="${data}"]`);
+
+            if (draggedItem) {
+                const availableMembersList = document.getElementById('available-members-list');
+                const selectedMembersList = document.getElementById('selected-members-list');
+                const hiddenTeamMembersSelect = document.getElementById('id_team_members');
+
+                // Remove drag-related classes
+                draggedItem.classList.remove('opacity-50', 'border-dashed', 'border-2', 'border-indigo-500');
+
+                if (targetListType === 'selected') {
+                    selectedMembersList.appendChild(draggedItem);
+                    draggedItem.classList.remove('bg-gray-50', 'border-gray-300');
+                    draggedItem.classList.add('bg-blue-100', 'border-blue-300');
+                } else if (targetListType === 'available') {
+                    availableMembersList.appendChild(draggedItem);
+                    draggedItem.classList.remove('bg-blue-100', 'border-blue-300');
+                    draggedItem.classList.add('bg-gray-50', 'border-gray-300');
+                }
+                updateHiddenSelect();
+            }
+            draggedItemId = null; // Reset dragged item ID
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleSelect = document.getElementById('id_role');
+            const teamMembersGroup = document.getElementById('team-members-group');
+            const availableMembersList = document.getElementById('available-members-list');
+            const selectedMembersList = document.getElementById('selected-members-list');
+            const hiddenTeamMembersSelect = document.getElementById('id_team_members'); // The actual Django form field
+            const employeeForm = document.getElementById('employee-form');
+
+            let allEligibleEmployees = []; // Store all eligible employees fetched from Django
+
+            // Function to fetch eligible employees (Trainee, Junior Dev, Senior Dev)
+            async function fetchEligibleEmployees() {
+                try {
+                    const response = await fetch('{% url "attendance_app:api_get_eligible_employees" %}');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    allEligibleEmployees = data.employees;
+
+                    // Get initial selected members for update page (from the hidden select's options)
+                    const initialSelectedIds = Array.from(hiddenTeamMembersSelect.options)
+                                                    .filter(option => option.selected)
+                                                    .map(option => parseInt(option.value));
+
+                    // Filter out the current employee from available members in update view
+                    const currentEmployeeId = '{{ employee.id|default:"null" }}';
+                    if (currentEmployeeId !== 'null') {
+                        allEligibleEmployees = allEligibleEmployees.filter(emp => emp.id !== parseInt(currentEmployeeId));
+                    }
+
+                    populateLists(initialSelectedIds);
+
+                } catch (error) {
+                    console.error('Error fetching eligible employees:', error);
+                    // Optionally, display a user-friendly error message on the UI
+                    // displayMessage(document.getElementById('messages'), 'Failed to load eligible employees. Please try again.', 'error');
+                }
+            }
+
+            // Function to populate the available and selected lists
+            function populateLists(initialSelectedIds = []) {
+                availableMembersList.innerHTML = '';
+                selectedMembersList.innerHTML = '';
+
+                const selectedMembersMap = new Map();
+                initialSelectedIds.forEach(id => {
+                    const employee = allEligibleEmployees.find(emp => emp.id === id);
+                    if (employee) {
+                        selectedMembersMap.set(employee.id, employee.name);
+                    }
+                });
+
+                allEligibleEmployees.forEach(employee => {
+                    const listItem = document.createElement('li');
+                    listItem.dataset.id = employee.id;
+                    listItem.dataset.name = employee.name;
+                    listItem.textContent = `${employee.name} (${employee.id})`; // Display name and ID
+                    listItem.classList.add('p-2', 'border', 'rounded-md', 'cursor-grab', 'transition-colors', 'flex', 'justify-between', 'items-center');
+                    listItem.setAttribute('draggable', 'true'); // Make item draggable
+                    listItem.addEventListener('dragstart', drag); // Attach drag event listener
+
+                    if (selectedMembersMap.has(employee.id)) {
+                        selectedMembersList.appendChild(listItem);
+                        listItem.classList.add('bg-blue-100', 'border-blue-300');
+                    } else {
+                        availableMembersList.appendChild(listItem);
+                        listItem.classList.add('bg-gray-50', 'border-gray-300');
+                    }
+                });
+            }
+
+            // Function to update the hidden Django SelectMultiple field before form submission
+            function updateHiddenSelect() {
+                // Clear all existing options in the hidden select
+                hiddenTeamMembersSelect.innerHTML = '';
+
+                // Add options for each selected team member
+                Array.from(selectedMembersList.children).forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.dataset.id;
+                    option.textContent = item.dataset.name;
+                    option.selected = true; // Mark as selected
+                    hiddenTeamMembersSelect.appendChild(option);
+                });
+            }
+
+            // Event listener for role change
+            function toggleTeamMembersField() {
+                if (roleSelect.value === 'TEAM_LEADER') {
+                    teamMembersGroup.style.display = 'block';
+                    fetchEligibleEmployees(); // Fetch and populate lists when Team Leader is selected
+                } else {
+                    teamMembersGroup.style.display = 'none';
+                    // Clear selected members if role changes from Team Leader
+                    selectedMembersList.innerHTML = '';
+                    availableMembersList.innerHTML = '';
+                    updateHiddenSelect(); // Clear hidden select as well
+                }
+            }
+
+            // Initial call to set the correct state on page load
+            if (roleSelect) {
+                roleSelect.addEventListener('change', toggleTeamMembersField);
+                toggleTeamMembersField(); // Call on load to set initial state
+            }
+
+            // Attach event listener to the form for submission
+            if (employeeForm) {
+                employeeForm.addEventListener('submit', function(event) {
+                    // Ensure the hidden select is updated right before submission
+                    updateHiddenSelect();
+                });
+            }
+        });
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Style for drag-and-drop feedback */
+        .min-h-\[10rem\] {
+            min-height: 10rem; /* Ensures drop zones have visible height even when empty */
+        }
+        .cursor-grab {
+            cursor: grab;
+        }
+        .cursor-grabbing {
+            cursor: grabbing;
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,11 @@
+{# attendance_app/partials/top_max_attendance_list.html #}
+{% if top_5_max_attendance %}
+    {% for item in top_5_max_attendance %}
+        <li class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+            <span>{{ item.employee.name }} ({{ item.employee.employee_id }})</span>
+            <span class="font-bold text-blue-700">{{ item.total_hours|floatformat:1 }} hrs</span>
+        </li>
+    {% endfor %}
+{% else %}
+    <li class="py-2 text-gray-500">No attendance data available for the selected period.</li>
+{% endif %}

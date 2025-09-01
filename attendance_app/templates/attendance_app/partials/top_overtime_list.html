@@ -1,0 +1,11 @@
+{# attendance_app/partials/top_overtime_list.html #}
+{% if top_5_overtime %}
+    {% for item in top_5_overtime %}
+        <li class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+            <span>{{ item.employee.name }} ({{ item.employee.employee_id }})</span>
+            <span class="font-bold text-orange-700">{{ item.overtime_hours|floatformat:1 }} hrs overtime</span>
+        </li>
+    {% endfor %}
+{% else %}
+    <li class="py-2 text-gray-500">No overtime data available for the selected period.</li>
+{% endif %}

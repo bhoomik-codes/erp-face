@@ -1,0 +1,10 @@
+{# attendance_app/partials/top_absentees_list.html #}
+{% if top_5_absentees %}
+    {% for employee in top_5_absentees %}
+        <li class="py-2 border-b border-gray-200 last:border-b-0">{{ employee.name }}
+            ({{ employee.employee_id }})
+        </li>
+    {% endfor %}
+{% else %}
+    <li class="py-2 text-gray-500">No absentees found for the selected period.</li>
+{% endif %}

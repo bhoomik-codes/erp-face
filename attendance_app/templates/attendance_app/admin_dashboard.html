@@ -1,0 +1,150 @@
+{% extends 'attendance_app/dashboard.html' %}
+{% load static %}
+{% load widget_tweaks %} {# Load widget_tweaks to add classes to form fields #}
+{% with current_page='dashboard' %}
+{% endwith %}
+
+{% block title %}Admin Dashboard - VIDHEMA{% endblock %}
+
+{% block page_heading %}Dashboard{% endblock %}
+
+{% block head_extra %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Specific styles for dashboard content, extending admin_styles.css */
+        /* Filter buttons are now styled via .filter-button in admin_styles.css */
+        /* List section headers are now styled via .list-section h2 in admin_styles.css */
+        /* Card styles are now in admin_styles.css */
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="flex flex-wrap justify-center mb-8 gap-4">
+
+        <div class="relative group w-40 h-12 overflow-hidden cursor-pointer">
+            <button
+                    class="filter-button relative z-10 w-full h-full
+               font-semibold text-sm tracking-wide uppercase
+               rounded-md transition-all duration-300 ease-in-out
+               {% if filter_period == 'today' %}
+                   bg-primary-blue text-white
+               {% else %}
+                   bg-white text-charcoal-text hover:bg-pale-blue-bg hover:text-primary-blue
+               {% endif %}"
+                    data-period="today">
+                Current Day
+            </button>
+        </div>
+
+        <div class="relative group w-40 h-12 overflow-hidden cursor-pointer">
+            <button
+                    class="filter-button relative z-10 w-full h-full
+               font-semibold text-sm tracking-wide uppercase
+               rounded-md transition-all duration-300 ease-in-out
+               {% if filter_period == 'week' %}
+                   bg-primary-blue text-white
+               {% else %}
+                   bg-white text-charcoal-text hover:bg-pale-blue-bg hover:text-primary-blue
+               {% endif %}"
+                    data-period="week">
+                Current Week
+            </button>
+        </div>
+
+        <div class="relative group w-40 h-12 overflow-hidden cursor-pointer">
+            <button
+                    class="filter-button relative z-10 w-full h-full
+               font-semibold text-sm tracking-wide uppercase
+               rounded-md transition-all duration-300 ease-in-out
+               {% if filter_period == 'month' %}
+                   bg-primary-blue text-white
+               {% else %}
+                   bg-white text-charcoal-text hover:bg-pale-blue-bg hover:text-primary-blue
+               {% endif %}"
+                    data-period="month">
+                Current Month
+            </button>
+        </div>
+
+        <div class="relative group w-40 h-12 overflow-hidden cursor-pointer">
+            <button
+                    class="filter-button relative z-10 w-full h-full
+               font-semibold text-sm tracking-wide uppercase
+               rounded-md transition-all duration-300 ease-in-out
+               {% if filter_period == 'year' %}
+                   bg-primary-blue text-white
+               {% else %}
+                   bg-white text-charcoal-text hover:bg-pale-blue-bg hover:text-primary-blue
+               {% endif %}"
+                    data-period="year">
+                Current Year
+            </button>
+        </div>
+
+    </div>
+
+
+    <section class="cards grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="card bg-[#3D84A8] text-dark-blue-gray p-6">
+            <h3 class="text-4xl font-extrabold mb-2">{{ total_employees }}</h3>
+            <p class="text-lg">Total Employees</p>
+        </div>
+        <div class="card bg-light-sky-blue text-dark-blue-gray p-6" id="totalAttendanceHoursCard">
+            <h3 class="text-4xl font-extrabold mb-2">{{ total_attendance_hours_all }} hrs</h3>
+            <p class="text-lg">Total Attendance Hours</p>
+        </div>
+        <div class="card bg-[#46CDCF] text-dark-blue-gray p-6" id="totalOvertimeHoursCard">
+            <h3 class="text-4xl font-extrabold mb-2">{{ total_overtime_all }} hrs</h3>
+            <p class="text-lg">Total Overtime</p>
+        </div>
+        <div class="card bg-[#F38BA0] text-dark-pink p-6" id="totalAbsenteesCard">
+            <h3 class="text-4xl font-extrabold mb-2">{{ total_absentees_count }}</h3>
+            <p class="text-lg">Total Absentees</p>
+        </div>
+    </section>
+
+
+    <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+    {# New grid container for list sections #}
+    <div class="list-sections-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-auto-fit-min-content gap-6 mb-8">
+        <section class="list-section">
+            <h2 class="bg-primary-blue text-white text-xl font-bold px-4 py-2">
+                Top 5 Absentees (<span id="topAbsenteesPeriodDisplay">Current {{ filter_period|capfirst }}</span>)
+            </h2>
+            <ul id="topAbsenteesList" class="scrollable-card bg-white p-4 max-h-64 overflow-y-auto space-y-2">
+                {% include 'attendance_app/partials/top_absentees_list.html' with top_5_absentees=top_5_absentees %}
+            </ul>
+        </section>
+
+        <section class="list-section">
+            <h2 class="bg-light-sky-blue text-dark-blue-gray text-xl font-bold px-4 py-2">
+                Top 5 Employees by Max Attendance (<span
+                    id="topMaxAttendancePeriodDisplay">Total Hours Current {{ filter_period|capfirst }}</span>)
+            </h2>
+            <ul id="topMaxAttendanceList" class="scrollable-card bg-white p-4 max-h-64 overflow-y-auto space-y-2">
+                {% include 'attendance_app/partials/top_max_attendance_list.html' with top_5_max_attendance=top_5_max_attendance %}
+            </ul>
+        </section>
+
+        <section class="list-section">
+            <h2 class="bg-warning-orange text-white text-xl font-bold px-4 py-2">
+                Top 5 Employees by Overtime Work (<span
+                    id="topOvertimePeriodDisplay">Current {{ filter_period|capfirst }}</span>)
+            </h2>
+            <ul id="topOvertimeList" class="scrollable-card bg-white p-4 max-h-64 overflow-y-auto space-y-2">
+                {% include 'attendance_app/partials/top_overtime_list.html' with top_5_overtime=top_5_overtime %}
+            </ul>
+        </section>
+    </div>
+
+
+{% endblock %}
+
+{% block scripts %}
+    {# <div id="react-chatbot-root"></div> #}
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <script src="{% static 'js/common_utils.js' %}" defer></script>
+    <script src="{% static 'js/admin_scripts.js' %}" defer></script>
+    <script src="{% static 'js/chatbot_app.js' %}" defer></script>
+{% endblock %}

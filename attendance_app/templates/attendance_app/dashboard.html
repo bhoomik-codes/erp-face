@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %}</title>
+    {# Link to the consolidated admin styles #}
+    <link rel="stylesheet" href="{% static 'css/admin_styles.css' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    {# Font Awesome for icons #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script>
+        // Tailwind CSS configuration for custom colors based on the new blue/gray theme
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#0066CC', // Strong Blue for primary actions/active states
+                        'dark-blue-gray': '#1A2631', // Dark background for sidebar
+                        'charcoal-text': '#36454F', // Dark text color
+                        'light-sky-blue': '#87CEEB', // Lighter blue for accents
+                        'pale-blue-bg': '#F0F8FF', // Very light background for main content
+                        'silver-gray': '#C0C0C0', // For subtle text/borders
+                        'light-gray-border': '#E0E0E0', // For borders
+                        'success-green': '#28A745', // A standard green for success messages
+                        'warning-orange': '#FFC107', // A standard orange for warnings
+                        'danger-red': '#DC3545', // A standard red for errors/danger
+                    }
+                }
+            }
+        }
+    </script>
+    {% block head_extra %}{% endblock %} {# For page-specific head content like Chart.js or Leaflet CSS #}
+</head>
+<body class="flex min-h-screen bg-pale-blue-bg font-inter text-charcoal-text">
+{# The CSRF token should be within the body to be reliably accessible by JavaScript #}
+{% csrf_token %}
+
+{# Sidebar Navigation #}
+<aside class="w-64 bg-dark-blue-gray text-white flex flex-col p-6 shadow-lg fixed h-screen z-50">
+    <div class="logo-section mb-10 text-center">
+        <img src="{% static 'img/vidhemalogo.webp' %}" alt="VIDHEMA Logo"
+             class="h-10 mx-auto mb-4 filter drop-shadow-lg">
+    </div>
+    <nav class="flex-1 flex flex-col space-y-2 font-semibold">
+        <a href="{% url 'attendance_app:admin_dashboard' %}"
+           class="nav-link px-4 py-2 transition duration-300 flex items-center
+              {% if current_page == 'dashboard' %}bg-primary-blue text-white shadow-md
+              {% else %}hover:bg-light-sky-blue hover:text-dark-blue-gray{% endif %}">
+            <i class="fa-solid fa-home mr-3"></i> Dashboard
+        </a>
+
+        <a href="{% url 'attendance_app:employee_list' %}"
+           class="nav-link px-4 py-2 transition duration-300 flex items-center
+              {% if current_page in 'employee_list register_employee employee_update' %}bg-primary-blue text-white shadow-md
+              {% else %}hover:bg-light-sky-blue hover:text-dark-blue-gray{% endif %}">
+            <i class="fa-solid fa-users mr-3"></i> Employees
+        </a>
+
+        <a href="{% url 'attendance_app:attendance_report' %}"
+           class="nav-link px-4 py-2 transition duration-300 flex items-center
+              {% if current_page == 'view_attendance' %}bg-primary-blue text-white shadow-md
+              {% else %}hover:bg-light-sky-blue hover:text-dark-blue-gray{% endif %}">
+            <i class="fa-solid fa-chart-bar mr-3"></i> Attendance Report
+        </a>
+
+        <a href="{% url 'attendance_app:reports' %}"
+           class="nav-link px-4 py-2 transition duration-300 flex items-center
+              {% if current_page == 'reports' %}bg-primary-blue text-white shadow-md
+              {% else %}hover:bg-light-sky-blue hover:text-dark-blue-gray{% endif %}">
+            <i class="fa-solid fa-file-invoice mr-3"></i> Reports
+        </a>
+
+        <a href="{% url 'attendance_app:admin_settings' %}"
+           class="nav-link px-4 py-2 transition duration-300 flex items-center
+              {% if current_page == 'settings' %}bg-primary-blue text-white shadow-md
+              {% else %}hover:bg-light-sky-blue hover:text-dark-blue-gray{% endif %}">
+            <i class="fa-solid fa-gear mr-3"></i> Settings
+        </a>
+
+        <a href="{% url 'attendance_app:admin_logout' %}"
+           class="px-4 py-2 mt-4 bg-danger-red text-white hover:bg-red-700 flex items-center transition duration-300 rounded-md">
+            <i class="fa-solid fa-right-from-bracket mr-3"></i> Logout
+        </a>
+    </nav>
+</aside>
+
+{# Main Content Area #}
+<main class="flex-1 p-8 overflow-y-auto bg-pale-blue-bg ml-64 p-6">
+    {# Top Navigation Bar #}
+    <header class="top-nav">
+        <h2 class="font-bold text-3xl text-charcoal-text">{% block page_heading %}Dashboard{% endblock %}</h2>
+        <div class="profile flex items-center space-x-3">
+            <img class="aspect-square size-12 rounded-full outline outline-offset-2 outline-light-gray-border shadow-md"
+                 src="{% static 'img/avatar.png' %}" alt="User"/>
+            <span class="text-charcoal-text font-semibold text-lg">Admin</span>
+        </div>
+    </header>
+
+    {# Content Block for specific pages #}
+    {% block content %}
+        {# Default content or empty if pages are always extending this #}
+    {% endblock %}
+</main>
+
+{# Confirmation Modal - now placed at the root of the body for correct fixed positioning #}
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <p class="text-charcoal-text">Are you sure you want to delete employee <span id="modalEmployeeName"
+                                                                                     class="font-bold"></span>
+            (<span id="modalEmployeeId" class="font-bold"></span>)?</p>
+        <p class="text-sm text-danger-red mt-2">This action cannot be undone.</p>
+        <div class="modal-buttons">
+            <button id="confirmDeleteBtn" class="confirm-btn">Delete</button>
+            <button id="cancelDeleteBtn" class="cancel-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,104 @@
+{% extends 'attendance_app/dashboard.html' %}
+{% load static %}
+
+{% block title %}Admin Reports - VIDHEMA{% endblock %}
+
+{% block page_heading %}Reports{% endblock %}
+
+{% block head_extra %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {# NEW: Include jQuery before reports_scripts.js #}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    {% with current_page='reports' %}
+        <div class="reports-grid">
+            {# Emotion Tracking Trends Chart #}
+            <div class="reports-card">
+                <h3 style="font-size: 30px; font-weight: bold">Emotion Tracking Trends</h3>
+                <div class="flex justify-end mb-4 space-x-2">
+                    <button id="emotionWeeklyBtn" class="report-btn" data-chart="emotion" data-period="weekly">Weekly
+                    </button>
+                    <button class="report-btn" data-chart="emotion" data-period="monthly">Monthly</button>
+                    <button class="report-btn" data-chart="emotion" data-period="yearly">Yearly</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="emotionTrendsChart"></canvas>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button class="download-chart report-btn" data-target="emotionTrendsChart">Download</button>
+                </div>
+            </div>
+
+            {# Leave Type Distribution Chart (Static - no period selection) #}
+            <div class="reports-card">
+                <h3 style="font-size: 30px; font-weight: bold">Leave Type Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="leaveDistributionChart"></canvas>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button class="download-chart report-btn" data-target="leaveDistributionChart">Download</button>
+                </div>
+            </div>
+
+            {# Late Arrivals vs On-Time Stats Chart #}
+            <div class="reports-card">
+                <h3 style="font-size: 30px; font-weight: bold">Late Arrivals vs On-Time Stats</h3>
+                <div class="flex justify-end mb-4 space-x-2">
+                    <button id="arrivalWeeklyBtn" class="report-btn" data-chart="arrival" data-period="weekly">Weekly
+                    </button>
+                    <button class="report-btn" data-chart="arrival" data-period="monthly">Monthly</button>
+                    <button class="report-btn" data-chart="arrival" data-period="yearly">Yearly</button>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="arrivalStatsChart"></canvas>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button class="download-chart report-btn" data-target="arrivalStatsChart">Download</button>
+                </div>
+            </div>
+
+            {# Attendance Trends Over Time Chart #}
+            <div class="reports-card">
+                <h3 style="font-size: 30px; font-weight: bold">Attendance Trends Over Time</h3>
+                <div class="flex justify-end mb-4 space-x-2">
+                    <button id="attendanceWeeklyBtn" class="report-btn" data-chart="attendance" data-period="weekly">
+                        Weekly
+                    </button>
+                    <button class="report-btn" data-chart="attendance" data-period="monthly">Monthly</button>
+                    <button class="report-btn" data-chart="attendance" data-period="yearly">Yearly</button>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="attendanceTrendsChart"></canvas>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button class="download-chart report-btn" data-target="attendanceTrendsChart">Download</button>
+                </div>
+            </div>
+        </div>
+    {% endwith %}
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        // Parse the JSON data passed from Django's reports_view
+        const reportData = JSON.parse('{{ report_data|escapejs }}');
+    </script>
+    <script>
+        document.querySelectorAll('.download-chart').forEach(button => {
+            button.addEventListener('click', () => {
+                const chartId = button.getAttribute('data-target');
+                const canvas = document.getElementById(chartId);
+                const link = document.createElement('a');
+                link.download = chartId + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        });
+    </script>
+    {# Include the reports_scripts.js after jQuery and Chart.js #}
+    <script src="{% static 'js/reports_scripts.js' %}"></script>
+{% endblock %}

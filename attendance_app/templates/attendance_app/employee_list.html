@@ -1,0 +1,102 @@
+{% extends 'attendance_app/dashboard.html' %}
+{% load static %}
+{% with current_page='employee_list' %}{% endwith %}
+
+
+{% block title %}Employee List - VIDHEMA{% endblock %}
+
+{% block page_heading %}Employee Management{% endblock %}
+
+{% block content %}
+    {% with current_page='employee_list' %}
+        <div id="messages" class="mb-4"></div>
+        {# For displaying success/error messages #}
+
+        {# Register New Employee button #}
+        <div class="flex justify-end mb-6">
+            <a href="{% url 'attendance_app:register_employee' %}"
+               class="add-employee-btn text-white font-semibold md-50 px-4 py-2 rounded-md bg-primary-red hover:bg-primary-red-dark">
+                <i class="fa-solid fa-user-plus mr-2"></i> Register New Employee
+            </a>
+        </div>
+
+        <div class="overflow-x-auto bg-white rounded-xl shadow-md">
+            <table class="employee-table min-w-full divide-y divide-light-gray-border">
+                <thead>
+                <tr>
+                    <th class="px-8 py-3 text-left text-xs font-medium text-dark-blue-gray uppercase tracking-wider">
+                        Photo
+                    </th>
+                    <th class="px-8 py-3 text-left text-xs font-medium text-dark-blue-gray uppercase tracking-wider">
+                        Name
+                    </th>
+                    <th class="px-8 py-3 text-left text-xs font-medium text-dark-blue-gray uppercase tracking-wider">
+                        Employee ID
+                    </th>
+                    <th class="pl-7 py-3 text-left text-xs font-medium text-dark-blue-gray uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-light-gray-border">
+                {% for employee in employees %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {# This now uses the URL stored in the photo field #}
+                            {% if employee.photo %}
+                                <img src="{{ employee.photo }}" alt="{{ employee.name }}"
+                                     class="h-16 w-16 rounded-full object-cover border border-light-gray-border">
+                            {% else %}
+                                <img src="{% static 'img/default_avatar.png' %}" alt="No Photo"
+                                     class="h-16 w-16 rounded-full object-cover border border-light-gray-border">
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-lg text-charcoal-text">{{ employee.name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-lg text-silver-gray">{{ employee.employee_id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-lg font-medium">
+                            <a href="{% url 'attendance_app:employee_update' employee.employee_id %}"
+                               class="edit-btn z-20 font-semibold bg-danger hover:bg-danger-dark rounded-md"
+                               style="margin-right: 10px; padding: 5px">
+                                <i class="fa-solid fa-edit mr-2"></i>
+                            </a>
+                            <button
+                                    type="button"
+                                    class="delete-btn relative z-20 h-full md-50 text-white font-semibold bg-danger hover:bg-danger-dark rounded-md"
+                                    style="padding: 5px"
+                                    data-employee-id="{{ employee.employee_id }}"
+                                    data-employee-name="{{ employee.name }}">
+                                <i class="fa-solid fa-trash-alt mr-2"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-silver-gray">No employees registered yet.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# The delete modal HTML has been moved to dashboard.html #}
+    {% endwith %} {# End current_page context #}
+{% endblock %}
+
+{% block scripts %}
+    {# Load common_utils.js and employee_management.js as before #}
+    <script type="module" src="{% static 'js/common_utils.js' %}" defer></script>
+    <script type="module">
+        import {initializeDeleteModal} from "{% static 'js/common_utils.js' %}";
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // FIX: Initialize csrfToken before it is used
+            const csrfTokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+            const csrfToken = csrfTokenElement ? csrfTokenElement.value : '';
+
+            if (!csrfToken) {
+                console.error("CSRF token not found. AJAX requests may fail.");
+            }
+            initializeDeleteModal(csrfToken);
+        });
+    </script>
+{% endblock %}
