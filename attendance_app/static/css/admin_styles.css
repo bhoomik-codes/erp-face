@@ -1,0 +1,528 @@
+/* Basic Reset & Global Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: #36454F; /* charcoal-text */
+    background-color: #F0F8FF; /* pale-blue-bg */
+    line-height: 1.6;
+}
+
+/* Base Link Styles */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: none;
+}
+
+/* --- Sidebar Navigation --- */
+aside {
+    min-height: 100vh;
+    position: sticky; /* Make it sticky */
+    top: 0; /* Align to top */
+}
+
+aside .logo-section {
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle separator */
+    display: flex; /* Flex for logo and text */
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+aside .logo-section img {
+    height: 3rem; /* Slightly larger logo */
+    width: auto;
+}
+aside .logo-section span {
+    font-size: 1.875rem; /* text-3xl */
+    font-weight: 800; /* Extra bold */
+    color: #fff; /* White text */
+}
+
+aside nav {
+    padding-top: 1.5rem;
+    flex-grow: 1; /* Allow nav to take available space */
+}
+
+.nav-link {
+    @apply transition-all duration-300 ease-in-out;
+    color: #BBDEFB; /* Light Blue for inactive links */
+    padding: 0.85rem 1.25rem; /* Adjusted padding */
+    margin-bottom: 0.5rem; /* Spacing between links */
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Space between icon and text */
+}
+
+.nav-link:hover {
+    background-color: #1A2631; /* Darker blue-gray on hover */
+    color: #FFFFFF;
+    transform: translateX(5px); /* Slight slide effect */
+}
+
+.nav-link.active-nav-link {
+    background-color: #0066CC; /* primary-blue */
+    color: #FFFFFF;
+    font-weight: 600;
+    transform: translateX(5px);
+}
+
+.nav-link.active-nav-link:hover {
+    background-color: #0056B3; /* Darker primary-blue on hover */
+    transform: translateX(7px); /* More pronounced slide */
+}
+
+.logout-btn {
+    @apply flex items-center px-4 py-3 text-lg bg-danger-red hover:bg-red-700 transition-colors duration-300 ease-in-out mt-auto rounded-md;
+    color: white;
+    font-weight: 600;
+    margin-top: 2rem !important; /* Ensure it stays at the bottom */
+}
+.logout-btn:hover {
+    transform: translateY(-2px); /* Slight lift on hover */
+}
+
+/* --- Main Content Area & Top Nav --- */
+main {
+    padding: 2.5rem; /* Generous padding */
+    flex-grow: 1; /* Allow main content to fill remaining space */
+}
+
+.top-nav {
+    background-color: #FFFFFF;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem; /* More space below top nav */
+    border-radius: 0.75rem; /* Rounded corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+}
+
+.top-nav h2 {
+    color: #36454F; /* charcoal-text */
+    font-size: 2.5rem; /* Larger heading */
+    font-weight: 800; /* Extra bold */
+}
+
+.profile img {
+    outline: 4px solid #0066CC; /* primary-blue outline */
+    outline-offset: 4px; /* More prominent outline */
+    transition: all 0.3s ease;
+}
+.profile img:hover {
+    transform: scale(1.05);
+}
+
+.profile span {
+    color: #36454F; /* charcoal-text */
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 700;
+}
+
+/* --- General Container and Card Styles --- */
+.container {
+    @apply w-full max-w-6xl mx-auto p-8 bg-white rounded-xl shadow-md; /* Increased max-width, more padding, larger rounded corners */
+    margin-bottom: 2.5rem; /* Consistent bottom margin */
+    border: 1px solid #E0E0E0; /* light-gray-border */
+}
+
+.card {
+    @apply p-6 transition-all duration-300 ease-in-out rounded-xl shadow-md;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 160px; /* Ensure cards have a minimum height */
+    position: relative;
+    overflow: hidden; /* Hide overflow for background effects */
+    border: 1px solid #E0E0E0; /* light-gray-border */
+}
+/* Card subtle background patterns/gradients - REMOVED */
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 100px 100px;
+    opacity: 0.1;
+    z-index: 0;
+}
+
+
+.card h3 {
+    font-size: 3.5rem; /* Even larger numbers */
+    font-weight: 800;
+    z-index: 1; /* Bring text above background effect */
+    position: relative;
+}
+
+.card p {
+    font-size: 1.3rem; /* Larger text */
+    opacity: 0.95;
+    z-index: 1;
+    position: relative;
+}
+
+/* --- Form Styles (Applies to login, register, update, settings) --- */
+.form-group {
+    @apply mb-6; /* More vertical space between form groups */
+}
+
+.form-group label {
+    @apply block text-charcoal-text text-base font-semibold mb-2; /* Larger, bolder labels */
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group select,
+.form-group textarea {
+    @apply appearance-none border border-light-gray-border w-full py-3 px-4 text-charcoal-text leading-tight rounded-md focus:outline-none focus:ring-3 focus:ring-primary-blue focus:border-transparent transition-all duration-200;
+    font-size: 1.05rem; /* Slightly larger font */
+}
+
+.form-group input[type="file"] {
+    @apply block w-full text-charcoal-text mt-2 p-2 border border-light-gray-border bg-white rounded-md; /* Style file input */
+}
+
+.errorlist {
+    @apply text-danger-red text-sm mt-1 list-disc list-inside;
+    padding-left: 1.5rem; /* Indent error messages */
+}
+
+/* --- Button Styles (Common across many pages) --- */
+.login-button,
+.register-btn,
+.save-btn,
+.add-employee-btn,
+.edit-btn,
+.delete-btn,
+.report-btn,
+.confirm-btn,
+.cancel-btn {
+    @apply px-7 py-3 font-semibold text-white transition-all duration-300 ease-in-out transform hover:scale-105 rounded-md shadow-md; /* Increased padding, more rounded, stronger shadow */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    font-size: 1.05rem; /* Slightly larger font */
+}
+
+.login-button, .register-btn, .save-btn, .add-employee-btn, .confirm-btn {
+    background-color: #0066CC; /* primary-blue */
+}
+.login-button:hover, .register-btn:hover, .save-btn:hover, .add-employee-btn:hover, .confirm-btn:hover {
+    background-color: #0056B3; /* Darker primary-blue on hover */
+}
+
+.edit-btn {
+    background-color: #87CEEB; /* light-sky-blue */
+    color: #1A2631; /* dark-blue-gray for text */
+    box-shadow: 0 6px 15px rgba(135, 206, 235, 0.4);
+}
+.edit-btn:hover {
+    background-color: #6CB3D9; /* Darker light-sky-blue */
+    box-shadow: 0 8px 20px rgba(108, 179, 217, 0.5);
+}
+
+.delete-btn, .cancel-btn {
+    background-color: #DC3545; /* danger-red */
+    box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
+}
+.delete-btn:hover, .cancel-btn:hover {
+    background-color: #C82333; /* Darker danger-red */
+    box-shadow: 0 8px 20px rgba(200, 35, 51, 0.5);
+}
+
+.back-btn {
+    @apply px-7 py-3 font-semibold text-charcoal-text border border-light-gray-border bg-white hover:bg-pale-blue-bg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-md rounded-md;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.05rem;
+}
+
+.button-group {
+    @apply flex justify-end gap-5 mt-8; /* More spacing between buttons */
+}
+
+
+/* --- Admin Dashboard Specific Styles --- */
+
+.list-sections-grid {
+    /* Use auto-fit to create columns that fit content and wrap */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Min width of 280px, then expands */
+    grid-auto-flow: dense; /* Fill in gaps */
+    align-items: start; /* Align items to the start of their grid area */
+}
+
+.list-section {
+    @apply bg-white shadow-xl overflow-hidden rounded-xl; /* More rounded, stronger shadow */
+    border: 1px solid #E0E0E0; /* light-gray-border */
+    display: flex; /* Make it a flex container */
+    flex-direction: column; /* Stack children vertically */
+}
+
+.list-section h2 {
+    background-color: #0066CC; /* primary-blue */
+    color: #FFFFFF; /* White text */
+    padding: 1rem 1.5rem; /* Adjusted padding for better fit */
+    font-size: 1.5rem; /* Slightly larger heading for prominence */
+    font-weight: 700; /* Bold */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Subtle separator for header */
+}
+
+.list-section ul {
+    @apply list-none list-inside px-6 py-4 text-charcoal-text text-lg; /* Increased padding */
+    max-height: 300px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.list-section ul li {
+    @apply py-3 border-b border-light-gray-border last:border-b-0 flex justify-between items-center;
+    color: #36454F;
+    font-size: 1.05rem;
+}
+
+.list-section ul li span:last-child {
+    font-weight: 700; /* Bolder value */
+    color: #1A2631; /* dark-blue-gray for value */
+}
+
+/* --- Employee List Specific Styles --- */
+.employee-list-container .add-employee-btn {
+    background-color: #28A745; /* success-green */
+    box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+}
+.employee-list-container .add-employee-btn:hover {
+    background-color: #218838; /* Darker success-green on hover */
+}
+
+.employee-table {
+    @apply min-w-full divide-y divide-light-gray-border;
+}
+.employee-table thead th {
+    @apply px-6 py-4 text-left text-xs font-semibold text-charcoal-text uppercase tracking-wider bg-pale-blue-bg; /* Lighter header background, more padding */
+    border-bottom: 2px solid #BBDEFB; /* Light Blue border */
+}
+.employee-table tbody td {
+    @apply px-6 py-4; /* Consistent padding */
+    vertical-align: middle;
+}
+.employee-table tbody tr:nth-child(even) {
+    background-color: #F8FCFF; /* Very subtle stripe */
+}
+.employee-table tbody tr:hover {
+    background-color: #E6F3FF; /* More noticeable hover effect */
+    transform: none; /* No scaling for table rows */
+    box-shadow: none;
+}
+.employee-table img {
+    @apply rounded-full border-2 border-primary-blue object-cover;
+    width: 64px; /* Adjusted size */
+    height: 64px;
+}
+.employee-table .edit-btn,
+.employee-table .delete-btn {
+    @apply p-2 rounded-md; /* Adjusted padding for smaller buttons */
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed !important; /* Force fixed positioning */
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important; /* Force full viewport width */
+    height: 100vh !important; /* Force full viewport height */
+    background-color: rgba(0, 0, 0, 0.6) !important; /* Ensure background opacity */
+    display: none; /* Hidden by default, shown by JS */
+    align-items: center !important; /* Center content vertically */
+    justify-content: center !important; /* Center content horizontally */
+    z-index: 1000 !important; /* Ensure it's on top of everything */
+    backdrop-filter: blur(5px); /* Blurred background for modal */
+    margin: 0 !important; /* Remove any default/inherited margins */
+    padding: 0 !important; /* Remove any default/inherited padding */
+    box-sizing: border-box !important; /* Ensure consistent box model */
+}
+.modal-content {
+    @apply bg-white p-10 shadow-2xl max-w-lg w-full text-center relative rounded-xl; /* More padding, rounded, stronger shadow */
+    border: 2px solid #0066CC; /* primary-blue border */
+    animation: fadeInScale 0.3s ease-out forwards;
+    z-index: 1001; /* Ensure content is above the modal background */
+}
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+.modal-content p {
+    @apply text-xl text-charcoal-text mb-8 font-semibold; /* Larger, bolder text */
+}
+.modal-buttons {
+    @apply flex justify-center gap-5;
+}
+.modal-buttons .confirm-btn,
+.modal-buttons .cancel-btn {
+    @apply px-6 py-2.5 text-base; /* More rounded buttons */
+}
+
+
+/* --- Register/Update Employee Styles --- */
+/* .container h2 already styled globally */
+
+.current-photo-section {
+    @apply mb-6 text-center; /* More space */
+}
+.current-photo-section img {
+    @apply w-40 h-40 object-cover rounded-full mx-auto mb-4 border-6 border-pale-blue-bg shadow-lg; /* Larger, softer border */
+}
+.current-photo-section p {
+    @apply text-silver-gray text-base font-medium;
+}
+
+
+/* --- Attendance Report Specific Styles --- */
+.filter-form {
+    @apply flex flex-wrap gap-5 mb-8 p-8 bg-white shadow-xl justify-center items-end rounded-xl; /* More padding, rounded, stronger shadow */
+    border: 1px solid #E0E0E0; /* light-gray-border */
+}
+.filter-form > div {
+    @apply flex-1 min-w-[220px]; /* Slightly wider filter inputs */
+}
+.filter-form label {
+    @apply text-charcoal-text font-semibold mb-2 block text-base;
+}
+.filter-form input[type="date"],
+.filter-form select {
+    @apply w-full p-3 border border-light-gray-border focus:ring-3 focus:ring-primary-blue focus:border-transparent transition-all duration-200 rounded-md; /* More padding, rounded, thicker ring */
+}
+.filter-form button {
+    @apply px-6 py-3 font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 shadow-md rounded-md;
+}
+.filter-form .apply-filter-btn {
+    background-color: #0066CC; /* primary-blue */
+    color: white;
+}
+.filter-form .apply-filter-btn:hover {
+    background-color: #0056B3; /* Darker primary-blue on hover */
+}
+
+
+.filter-form .clear-filter-btn {
+    background-color: #E0E0E0; /* light-gray-border */
+    color: #36454F; /* charcoal-text */
+    border: 1px solid #C0C0C0; /* silver-gray */
+}
+.filter-form .clear-filter-btn:hover {
+    background-color: #C0C0C0; /* silver-gray */
+}
+
+
+.attendance-table-container {
+    @apply overflow-hidden bg-white mb-8 rounded-xl shadow-md; /* More rounded, stronger shadow */
+    border: 1px solid #E0E0E0; /* light-gray-border */
+}
+.attendance-table {
+    @apply min-w-full divide-y divide-light-gray-border;
+}
+.attendance-table thead th {
+    @apply px-6 py-4 text-left text-sm font-bold text-charcoal-text uppercase tracking-wider bg-pale-blue-bg; /* Bolder, more prominent header */
+    border-bottom: 2px solid #BBDEFB; /* Light Blue border */
+}
+.attendance-table tbody td {
+    @apply px-6 py-4 text-charcoal-text; /* Darker text */
+    vertical-align: middle;
+    font-size: 0.95rem;
+}
+.attendance-table tbody tr:nth-child(even) {
+    background-color: #F8FCFF; /* Even lighter stripe */
+}
+.attendance-table tbody tr:hover {
+    background-color: #E6F3FF; /* More noticeable hover effect */
+    transform: none; /* No scaling for table rows */
+}
+.attendance-table .working-hours {
+    font-weight: 700;
+    color: #1A2631; /* dark-blue-gray */
+}
+
+
+/* --- Reports Page Specific Styles --- */
+.reports-grid {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-6; /* Consistent gap */
+}
+.reports-card {
+    @apply bg-white p-8 rounded-xl shadow-md; /* More padding, rounded, stronger shadow */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid #E0E0E0; /* light-gray-border */
+}
+.reports-card h3 {
+    @apply text-2xl font-bold text-charcoal-text mb-6 text-center; /* Larger, bolder heading, centered */
+}
+.reports-card .chart-container {
+    @apply relative flex-grow flex items-center justify-center; /* Ensures canvas centers and fills space */
+    min-height: 350px; /* Increased minimum height for charts */
+    padding: 1rem; /* Padding inside container */
+}
+.reports-card canvas {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+
+ /*--- Admin Settings Specific Styles --- */
+#map {
+    @apply h-80 border border-light-gray-border rounded-md; /* More */
+}
+.location-settings-form .save-btn {
+    @apply w-full;
+}
+
+/* Utility classes for messages */
+#messages {
+    @apply p-4 font-medium text-center rounded-md;
+    margin-bottom: 1.5rem;
+    border-left: 5px solid; /* Add a border-left for visual flair */
+}
+.message-success {
+    @apply bg-green-100 text-success-green border-green-400;
+}
+.message-error {
+    @apply bg-red-100 text-danger-red border-red-400;
+}
+.message-info {
+    @apply bg-blue-100 text-primary-blue border-blue-400;
+}
+.message-warning {
+    @apply bg-yellow-100 text-warning-orange border-yellow-400;
+}
+
+/* New styles for export buttons */
+.export-buttons {
+    @apply flex gap-2;
+}
+
+.export-btn {
+    @apply bg-light-gray-border text-charcoal-text hover:bg-silver-gray transition-colors duration-200 rounded-full;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; /* Fixed width for circular button */
+    height: 40px; /* Fixed height for circular button */
+}
+
+.export-btn i {
+    font-size: 1.25rem; /* Icon size */
+}

@@ -1,0 +1,71 @@
+{% load static %}
+{% load widget_tweaks %} {# Add this line to load the widget_tweaks filters #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{% static 'css/admin_styles.css' %}">
+    {# Link to the new consolidated CSS #}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind CSS configuration for custom colors (re-defined here for standalone page)
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#0066CC', // Strong Blue for primary actions/active states
+                        'dark-blue-gray': '#1A2631', // Dark background for sidebar
+                        'charcoal-text': '#36454F', // Dark text color
+                        'light-sky-blue': '#87CEEB', // Lighter blue for accents
+                        'pale-blue-bg': '#F0F8FF', // Very light background for main content
+                        'silver-gray': '#C0C0C0', // For subtle text/borders
+                        'light-gray-border': '#E0E0E0', // For borders
+                        'success-green': '#28A745', // A standard green for success messages
+                        'warning-orange': '#FFC107', // A standard orange for warnings
+                        'danger-red': '#DC3545', // A standard red for errors/danger
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-pale-blue-bg flex justify-center items-center min-h-screen text-charcoal-text font-inter p-4">
+<div class="login-container bg-dark-blue-gray p-10 rounded-xl shadow-2xl max-w-sm w-full text-center transform transition-all duration-300 hover:scale-105">
+    <div class="logo mb-8">
+        <img src="{% static 'img/vidhemalogo.webp' %}" alt="VIDHEMA Logo"
+             class="h-16 mx-auto mb-4 filter drop-shadow-lg">
+        <p class="text-white text-sm">Employee Attendance System</p>
+    </div>
+    <h2 class="text-2xl font-bold mb-6 text-white">Login</h2>
+    <form method="post" class="space-y-5">
+        {% csrf_token %}
+        <div class="form-group text-white">
+            {{ form.username.label_tag }}
+            {{ form.username|add_class:"w-full text-charcoal-text px-4 py-2 border border-light-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue" }}
+            {% if form.username.errors %}
+                <ul class="errorlist">{% for error in form.username.errors %}
+                    <li>{{ error }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+        <div class="form-group text-white">
+            {{ form.password.label_tag }}
+            {{ form.password|add_class:"w-full text-charcoal-text px-4 py-2 border border-light-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue" }}
+            {% if form.password.errors %}
+                <ul class="errorlist">{% for error in form.password.errors %}
+                    <li>{{ error }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+        {% if form.non_field_errors %}
+            <ul class="errorlist">{% for error in form.non_field_errors %}
+                <li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
+        <button type="submit"
+                class="login-button w-full bg-primary-blue hover:bg-light-sky-blue text-white font-semibold py-2 px-4 rounded-md transition duration-300 ease-in-out">
+            Login
+        </button>
+    </form>
+</div>
+</body>
+</html>

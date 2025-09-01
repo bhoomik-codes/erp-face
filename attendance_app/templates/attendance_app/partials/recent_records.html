@@ -1,0 +1,202 @@
+<style>
+    /* Styles for the recent records section */
+    .recent-records-scroll-container {
+        display: flex; /* Enable flex for horizontal scrolling */
+        overflow-x: auto; /* Allow horizontal scrolling */
+        gap: 1.5rem; /* More space between cards */
+        padding-bottom: 1.5rem; /* More padding for scrollbar */
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        scroll-snap-type: x mandatory; /* Snap to cards */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: #EF4444 #f1f1f1; /* Firefox */
+    }
+
+    /* Custom scrollbar for Webkit browsers */
+    .recent-records-scroll-container::-webkit-scrollbar {
+        height: 12px;
+    }
+
+    .recent-records-scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .recent-records-scroll-container::-webkit-scrollbar-thumb {
+        background: #EF4444;
+        border-radius: 10px;
+    }
+
+    .recent-records-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #DC2626;
+    }
+
+    .record-card {
+        flex: 0 0 300px; /* Wider cards */
+        background-color: #FDFDFD;
+        border: 1px solid #E0E0E0;
+        border-radius: 1rem; /* Added border-radius */
+        padding: 1.5rem; /* More padding */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Added box-shadow */
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease;
+        scroll-snap-align: start; /* Snap point for scrolling */
+    }
+
+    .record-card:hover {
+        transform: translateY(-5px); /* More pronounced hover effect */
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .record-card .employee-card-header { /* Targeting nested elements for specific styling */
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 1rem; /* More gap */
+        border-bottom: 1px dashed #D1D5DB; /* Lighter dashed line */
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .record-card .employee-photo { /* Targeting nested elements */
+        width: 70px; /* Larger photo */
+        height: 70px;
+        border: 3px solid #EF4444; /* Primary red border */
+        outline: 2px solid rgba(239, 68, 68, 0.2); /* Soft red outline */
+        outline-offset: 2px;
+        border-radius: 50%;
+        object-fit: cover; /* Fill the photo */
+    }
+
+    .record-card .employee-info-header { /* Targeting nested elements */
+        font-size: 1rem; /* Larger font */
+    }
+
+    .record-card .employee-info-header .name-and-tag { /* Targeting nested elements */
+        margin-bottom: 0.25rem; /* Small space between name/tag and ID */
+    }
+
+    .record-card .employee-info-header span { /* Targeting nested elements */
+        font-size: 0.9rem; /* Clearer ID font */
+        color: #4A4A4A; /* Accent gray */
+    }
+
+    .record-card .employee-info-header strong { /* Targeting nested elements */
+        font-weight: 700; /* Bolder name */
+        color: #1A1A1A; /* Dark text */
+    }
+
+    .recent-records-wrapper {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* optional: style each card */
+    .employee-card {
+        border: 1px solid #ddd;
+        padding: .75rem;
+        border-radius: 4px;
+        background: #fff;
+    }
+
+    /* make the key/value pairs line up in two columns inside each card */
+    .employee-card-details {
+        display: grid;
+        grid-template-columns: auto auto;
+        row-gap: .1rem;
+        column-gap: 0.1rem;
+        font-size: .875rem; /* small */
+    }
+
+    .employee-card-details span {
+        color: #555;
+    }
+
+    .employee-card-details strong {
+        font-weight: 600;
+    }
+
+    .record-card .employee-card-details div { /* Targeting nested elements */
+        padding-bottom: 0.1rem; /* More padding */
+        margin-bottom: 0.1rem;
+    }
+
+    .no-recent-records {
+        padding: 2rem; /* More padding */
+        font-size: 1.1rem;
+        font-style: normal;
+        border: 2px dashed #D1D5DB; /* More prominent dashed border */
+        background-color: #FDFDFD;
+    }
+
+    /* "Late" tag and popup */
+    .late-tag {
+        background-color: #EF4444; /* Primary red */
+        color: white;
+        padding: 0.3rem 0.6rem; /* Slightly more padding */
+        border-radius: 0.5rem; /* More rounded */
+        font-size: 0.8rem; /* Slightly larger font */
+        font-weight: 700; /* Bolder */
+        margin-left: 0.75rem; /* More space */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    }
+
+    .scroll-arrows {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 1.5rem;
+    }
+
+    .scroll-arrow {
+        background-color: #EF4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .scroll-arrow:hover {
+        background-color: #DC2626;
+        transform: scale(1.1);
+    }
+</style>
+
+{% for record in records %}
+    <div class="record-card"> {# <--- Added this wrapper div #}
+        <div class="employee-card-header">
+            {# Use Django's URL for static files and direct access to photo_url #}
+            <img src="{{ record.photo_url }}" alt="{{ record.employee_name }}" class="employee-photo">
+            <div class="employee-info-header">
+                <div class="name-and-tag">
+                    <strong>{{ record.employee_name }}</strong>
+                    {# Use Django's if condition for lateTag #}
+                    {% if record.is_late %}
+                        <span class="late-tag">Late</span>
+                    {% endif %}
+                </div>
+                <span>EMP ID: {{ record.employee_id }}</span>
+            </div>
+        </div>
+        <div class="employee-card-details" style="font-size: small">
+            {# Use Django's default filter for times if they are None #}
+            <div><span>Date:</span> <strong>{{ record.date }}</strong></div>
+            <div><span>In:</span> <strong>{{ record.in_time|default:'-' }}</strong></div>
+            <div><span>Out:</span> <strong>{{ record.out_time|default:'-' }}</strong></div>
+            <div><span>L. In:</span> <strong>{{ record.lunch_in_time|default:'-' }}</strong></div>
+            <div><span>L. Out:</span> <strong>{{ record.lunch_out_time|default:'-' }}</strong></div>
+            <div><span>Break In:</span> <strong>{{ record.break_in_time|default:'-' }}</strong></div>
+            <div><span>Break Out:</span> <strong>{{ record.break_out_time|default:'-' }}</strong></div>
+            {# Use Django's if condition for remarks #}
+            {#            {% if record.remarks %}#}
+            {#                <div><span>Remarks:</span> <strong>{{ record.remarks }}</strong></div>#}
+            {#            {% endif %}#}
+        </div>
+    </div> {# <--- Closing wrapper div #}
+{% endfor %}

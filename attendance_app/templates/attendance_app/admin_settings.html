@@ -1,0 +1,100 @@
+{% extends 'attendance_app/dashboard.html' %}
+{% load static %}
+{% load widget_tweaks %} {# Load widget_tweaks to add classes to form fields #}
+{% with current_page='settings' %}{% endwith %}
+
+
+{% block title %}Settings - VIDHEMA{% endblock %}
+
+{% block page_heading %}Admin Settings{% endblock %}
+
+{% block head_extra %}
+    {# Leaflet CSS for map display - Using 1.9.4 for consistency with JS #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" {# CORRECTED INTEGRITY HASH #}
+          crossorigin=""/>
+
+    {# Leaflet JavaScript - Load once, in the head, with integrity for security #}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <style>
+        /* Ensure the body uses border-box for consistent sizing */
+        body {
+            box-sizing: border-box;
+        }
+
+        /* Ensure parent containers also respect width constraints */
+        .container {
+            max-width: 100%; /* Ensure the container itself doesn't cause overflow */
+            overflow: hidden; /* Hide any overflowing content within this container */
+        }
+
+        /*
+           IMPORTANT: The #map styling below was commented out in your provided CSS.
+           It needs to be active for the map to render correctly.
+           This style block will override the previous inline height if this is loaded later.
+           It's best practice to define map container height in CSS.
+        */
+        #map {
+            height: 400px; /* Or use h-80 (320px) if you prefer that height from your commented out styles */
+            width: 100%; /* Ensure it takes 100% of its parent's width */
+            max-width: 100%; /* Explicitly prevent it from exceeding parent's width */
+            border-radius: 0.5rem; /* Added some rounded corners for aesthetics */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {% with current_page='settings' %}
+        <div id="messages" class="mb-4"></div>
+
+        {# Main content area for settings forms and map #}
+        <div class="container bg-white shadow-md rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Office Location Settings (Geofencing)</h2>
+            <p class="text-gray-600 mb-4">Set the central office location and the allowed radius for attendance
+                marking.</p>
+
+            <form id="locationSettingsForm" class="space-y-4">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="latitude" class="block text-gray-700 text-sm font-bold mb-2">Latitude:</label>
+                    <input type="number" step="any" id="latitude" name="latitude" required
+                           class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {# Added Tailwind-like classes for basic styling #}
+                </div>
+                <div class="form-group">
+                    <label for="longitude" class="block text-gray-700 text-sm font-bold mb-2">Longitude:</label>
+                    <input type="number" step="any" id="longitude" name="longitude" required
+                           class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {# Added Tailwind-like classes for basic styling #}
+                </div>
+                <div class="form-group">
+                    <label for="radius" class="block text-gray-700 text-sm font-bold mb-2">Radius (meters):</label>
+                    <input type="number" id="radius" name="radius" required min="1"
+                           class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {# Added Tailwind-like classes for basic styling #}
+                </div>
+                <button type="submit"
+                        class="save-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300 ease-in-out">
+                    {# Added Tailwind-like classes for button styling #}
+                    <i class="fa-solid fa-save mr-2"></i> Save Location Settings
+                </button>
+            </form>
+
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Office Location Map</h3>
+                <div id="map"></div>
+                {# Height is now defined in the style block above #}
+            </div>
+        </div>
+    {% endwith %} {# End current_page context #}
+{% endblock %}
+
+{% block scripts %}
+    {# Your custom JavaScript for admin settings #}
+    <script src="{% static 'js/admin_settings.js' %}" type="module"></script>
+    {# Added type="module" and corrected closing tag #}
+{% endblock %}
