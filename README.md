@@ -9,8 +9,8 @@ A Django-based employee attendance system powered by **face recognition**, **ges
   Marks attendance based on your shown gesture.  
 * **⏰ Automated Attendance Updates**  
   * **Lunch Out**: Automatically set LUNCH\_OUT if LUNCH\_IN and time \> 2:30 PM.  
-  * **Daily Checkout**: Automatically set OUT if no checkout by 11:00 PM.  
-* **🤖 AI Chat Assistant** An integrated chatbot on the admin dashboard for quick queries regarding attendance records, leave information, and general system information based on provided documentation (PDFs).  
+  * **Daily Checkout**: Automatically set OUT if no checkout by 11:00 PM.
+
 * **Admin Panel System**  
 * **👨‍💼 Employee Management** \- Edit existing employee data using the admin panel accessed at http://127.0.0.1:8000/attendance/admin\_login.  
   * Add new employees with personal details and a photo for face recognition at the admin panel.  
@@ -22,7 +22,7 @@ A Django-based employee attendance system powered by **face recognition**, **ges
 
 ### **🔗 Prerequisites**
 
-* **Python 3.x** [Download Python](https://www.python.org/downloads/) and add it to your PATH.  
+* **Python 3.13** [Download Python](https://www.python.org/downloads/) and add it to your PATH.  
 * **FFmpeg** Required for audio processing.  
   [Download FFmpeg](https://ffmpeg.org/download.html)  
   [How to Install FFmpeg on Windows](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/)  
@@ -32,18 +32,10 @@ A Django-based employee attendance system powered by **face recognition**, **ges
 
 ### **⚙️ Installation Steps**
 
-git clone \<your-repository-url\>  
-cd \<your-project-directory\>  
-run\_server.bat
-
-This script will:
-
-* Set up a Python virtual environment  
-* Install the dlib wheel and other dependencies (including transformers, sentence-transformers, faiss-cpu, PyMuPDF)  
-* Check for FFmpeg  
-* Apply migrations  
-* **Build the Chatbot's FAISS index and embeddings from PDFs in chatbot/documents/ (this might take some time on the first run).**  
-* Launch the Django development server
+git clone https://github.com/bhoomik-codes/erp-face.git  
+cd erp-face
+Set up a python virtual environment and download modules form requirements.txt
+python manage.py runserver
 
 ## **🧪 Usage Instructions**
 
@@ -57,9 +49,9 @@ Navigate to **Register Employee**, fill the form, and upload a clear face photo.
 
 ### **🔹 3\. Mark Attendance**
 
-* Go to **Mark Attendance** \- Stand in front of webcam  
-* System asks: *"Do you want to mark your attendance?"*  
-* Say **"yes"** or **"no"**
+* Go to **Mark Attendance** \- Stand in front of webcam
+* Press spacebar
+* Attendance Marked
 
 ### **🔹 4\. View Attendance Reports**
 
@@ -70,59 +62,9 @@ Go to **View Attendance Report** Apply filters:
 * 📍 Attendance Types  
 * ⏱️ Worked Hours Less Than X
 
-### **🔹 5\. Use the AI Chat Assistant (Admin Dashboard)**
-
-* Navigate to the **Admin Dashboard**.  
-* Click the floating chatbot icon (💬) in the bottom right corner to open the chat window.  
-* Type your questions, such as:  
-  * "What is employee 123's attendance for this month?"  
-  * "How many leaves does employee John Doe have?"  
-  * "What is the policy for overtime?" (if this is in your PDFs)  
-* The chatbot will try to answer based on the loaded documents and employee data.
-
 ## **🗂️ Project Structure (Simplified)**
 
-your-project/  
-│  
-├── manage.py  
-├── requirements.txt  
-├── run\_server.bat  
-├── wheels/  
-│   └── dlib-19.24.99-cp313-cp313-win\_amd64.whl  
-│  
-├── attendance\_app/  
-│   ├── management/  
-│   ├── migrations/  
-│   ├── services/  
-│   ├── static/  
-│   │   ├── css/  
-│   │   ├── img/  
-│   │   ├── js/  
-│   │   │   ├── admin\_scripts.js         \# Admin dashboard specific JS, including chatbot UI logic  
-│   │   │   ├── employee\_management.js   \# Employee management specific JS  
-│   │   │   └── common\_utils.js          \# Reusable JS functions (e.g., displayMessage, delete modal)
-│   │   └── models/                       \# Model files for gesture recognitions   
-│   ├── templates/  
-│   ├── views.py  
-│   ├── models.py  
-│   └── urls.py  
-│  
-├── chatbot/  
-│   ├── documents/                     \# Place PDFs for chatbot knowledge base here  
-│   ├── embeddings/                    \# Stores generated text embeddings (texts.pkl)  
-│   ├── faiss\_index/                   \# Stores the FAISS index (index.faiss)  
-│   ├── migrations/  
-│   ├── static/  
-│   ├── templates/  
-│   ├── \_\_pycache\_\_/  
-│   ├── chatbot\_core.py                \# Main chatbot logic, LLM interaction, RAG  
-│   ├── generate\_embeddings.py         \# Script to process PDFs and create embeddings/index  
-│   ├── urls.py  
-│   └── views.py  
-│  
-├── media/                             \# Stores uploaded employee photos etc.  
-├── vidAttendence2/                    \# Your main Django project config  
-└── wheels/                            \# Precompiled Python packages
+* Work in Progress Will update shortly
 
 ## **🧯 Troubleshooting**
 
@@ -146,6 +88,9 @@ Feel free to:
 - Fork the repo
 - Submit pull requests
 - Report bugs or request features
+
+
+# THIS README IS CURRENTLY INCOMPLETE PLEASE USE YOUR OWN BRAINS WHILE CLONING AND USING THIS SOFTWARE
 
 ---
 
