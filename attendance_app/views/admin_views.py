@@ -35,11 +35,8 @@ def _process_attendance_record_for_report(record, today_date):
 
     employee_obj = record.get('employee')
     record_date_obj = datetime.strptime(record.get('date'), '%Y-%m-%d').date()
-    # The 'breaks' list comes from the record dictionary created in AttendanceManager.get_filtered_attendance_summary.
-    # It is a list of Break instances.
-    record_breaks = record.get('breaks', [])
-    if record_breaks is None:
-        record_breaks = []
+    # Break tracking is not available in SQLite version
+    record_breaks = []
 
     (
         calculated_total_working_hours,

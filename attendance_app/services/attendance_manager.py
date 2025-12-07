@@ -97,17 +97,8 @@ class AttendanceManager:
         has_out = False
 
         if in_record:
-            # Calculate total break duration from the breaks array
-            if in_record.breaks:
-                for b in in_record.breaks:
-                    if b.break_in and b.break_out:
-                        # Ensure breaks are handled as timedeltas
-                        break_duration = datetime.combine(target_date, b.break_out) - datetime.combine(target_date,
-                                                                                                       b.break_in)
-                        if b.break_type == 'LUNCH':
-                            lunch_duration_seconds += break_duration.total_seconds()
-                        else:
-                            other_break_duration_seconds += break_duration.total_seconds()
+            # Break tracking not available in SQLite version
+            # Breaks field removed for SQLite compatibility
 
             # Fix: Ensure all datetime objects are timezone-aware for comparison
             # The database stores naive datetimes by default, so we need to make them aware.
@@ -186,7 +177,7 @@ class AttendanceManager:
                 'employee_id': record.employee.employee_id,
                 'date': record.date.strftime('%Y-%m-%d'),
                 'in_time': record.time.strftime('%I:%M %p'),
-                'breaks': record.breaks,
+                'breaks': [],  # Break tracking not available in SQLite
                 'out_record': AttendanceRecord.objects.filter(employee=record.employee, date=record.date,
                                                               attendance_type='OUT').first(),
                 'has_out': has_out,

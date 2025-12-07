@@ -2,7 +2,6 @@
 
 import attendance_app.models
 from django.db import migrations, models
-import djongo.models.fields
 
 
 class Migration(migrations.Migration):
@@ -12,11 +11,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='attendancerecord',
-            name='breaks',
-            field=djongo.models.fields.ArrayField(blank=True, model_container=attendance_app.models.Break, null=True),
-        ),
         migrations.AlterField(
             model_name='attendancerecord',
             name='attendance_type',
