@@ -81,14 +81,11 @@ WSGI_APPLICATION = 'vidAttendence2.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-# --- MONGODB CONFIGURATION ---
+# --- SQLITE3 CONFIGURATION ---
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
-        'NAME': 'erptest',
-        'CLIENT': {
-            'host': os.environ.get('MONGO_URI')
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -149,9 +146,4 @@ LOGOUT_REDIRECT_URL = '/admin_login/'  # Where to redirect after logout
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# AWS S3 Configuration
-# These are loaded from the .env file for security
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = 'chaturvedi-v2'
-AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
+

@@ -393,26 +393,17 @@ def mark_attendance_with_gesture(request):
                 attendance_type = 'OUT'
                 message = f"Out Time. Goodbye, {employee.name}!"
             else:
-                # Handle Breaks
-                last_break = in_record.breaks[-1] if in_record.breaks and in_record.breaks[-1].break_in else None
-                is_lunch_time = AttendanceManager.LUNCH_TIME_START <= current_time <= AttendanceManager.LUNCH_TIME_END
-
-                if last_break and not last_break.break_out:
-                    # Mark break out
-                    last_break.break_out = current_time
-                    in_record.save(update_fields=['breaks'])
-                    attendance_type = 'BREAK_OUT'
-                    message = f"{last_break.break_type.capitalize()} Break Out recorded."
-                else:
-                    # Start a new break
-                    new_break_type = 'LUNCH' if is_lunch_time else 'OTHER'
-                    new_break = Break(break_in=current_time, break_type=new_break_type)
-                    if not in_record.breaks:
-                        in_record.breaks = []
-                    in_record.breaks.append(new_break)
-                    in_record.save(update_fields=['breaks'])
-                    attendance_type = 'BREAK_IN'
-                    message = f"{new_break_type.capitalize()} Break In recorded."
+                # For SQLite, we don't support break tracking
+                # Just mark as out time
+                AttendanceRecord.objects.create(
+                    employee=employee,
+                    date=today,
+                    time=current_time,
+                    attendance_type='OUT',
+                    remarks="Out Time (break tracking not available)."
+                )
+                attendance_type = 'OUT'
+                message = f"Out Time recorded. Goodbye, {employee.name}!"
         else:
             # Employee is already checked out for the day
             message = f"You have already checked out for today, {employee.name}."
@@ -502,15 +493,7 @@ def recent_attendance_records(request):
                 out_time_str = out_record.time.strftime('%I:%M %p') if out_record and out_record.time else '-'
 
                 lunch_in_str, lunch_out_str = '-', '-'
-                if in_record and in_record.breaks:
-                    lunch_breaks = [b for b in in_record.breaks if b.break_type == 'LUNCH' and b.break_in]
-                    if lunch_breaks:
-                        first_lunch_in = min(b.break_in for b in lunch_breaks)
-                        lunch_out_list = [b.break_out for b in lunch_breaks if b.break_out]
-                        last_lunch_out = max(lunch_out_list) if lunch_out_list else None
-
-                        lunch_in_str = first_lunch_in.strftime('%I:%M %p')
-                        lunch_out_str = last_lunch_out.strftime('%I:%M %p') if last_lunch_out else '-'
+                # Break tracking is not available in SQLite version
 
                 total_break_duration_hours = lunch_duration_hours + other_break_duration_hours
                 total_break_duration_str = f"{total_break_duration_hours:.2f} hours" if total_break_duration_hours > 0 else "-"
