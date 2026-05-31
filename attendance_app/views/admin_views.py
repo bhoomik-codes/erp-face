@@ -2,6 +2,7 @@
 import json
 import random
 from datetime import date, timedelta, datetime, time
+from collections import defaultdict
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.utils import timezone
@@ -19,7 +20,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 
-from ..models import Employee, AttendanceRecord, LocationSetting, Break
+from ..models import Employee, AttendanceRecord, LocationSetting
 from ..services.attendance_manager import AttendanceManager
 
 logger = logging.getLogger(__name__)

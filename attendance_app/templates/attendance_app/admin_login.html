@@ -1,71 +1,383 @@
 {% load static %}
-{% load widget_tweaks %} {# Add this line to load the widget_tweaks filters #}
+{% load widget_tweaks %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <meta name="description" content="VIDHEMA ERP — Admin Login">
+    <title>Admin Login — VIDHEMA ERP</title>
+
     <link rel="stylesheet" href="{% static 'css/admin_styles.css' %}">
-    {# Link to the new consolidated CSS #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Tailwind CSS configuration for custom colors (re-defined here for standalone page)
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'primary-blue': '#0066CC', // Strong Blue for primary actions/active states
-                        'dark-blue-gray': '#1A2631', // Dark background for sidebar
-                        'charcoal-text': '#36454F', // Dark text color
-                        'light-sky-blue': '#87CEEB', // Lighter blue for accents
-                        'pale-blue-bg': '#F0F8FF', // Very light background for main content
-                        'silver-gray': '#C0C0C0', // For subtle text/borders
-                        'light-gray-border': '#E0E0E0', // For borders
-                        'success-green': '#28A745', // A standard green for success messages
-                        'warning-orange': '#FFC107', // A standard orange for warnings
-                        'danger-red': '#DC3545', // A standard red for errors/danger
+                        'primary':        '#4F46E5',
+                        'primary-hover':  '#4338CA',
+                        'primary-light':  '#EEF2FF',
+                        'sidebar':        '#0F172A',
+                        'surface-bg':     '#F8FAFC',
+                        'text-main':      '#1E293B',
+                        'text-muted':     '#64748B',
+                        'border-base':    '#E2E8F0',
+                        'danger':         '#EF4444',
+                        /* Legacy aliases */
+                        'primary-blue':   '#4F46E5',
+                        'dark-blue-gray': '#0F172A',
+                        'charcoal-text':  '#1E293B',
+                        'light-gray-border': '#E2E8F0',
+                        'danger-red':     '#EF4444',
                     }
                 }
             }
         }
     </script>
+
+    <style>
+        /* Animated gradient login background */
+        .login-bg {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 40%, #312E81 70%, #1E293B 100%);
+        }
+
+        /* Floating orbs */
+        .login-bg::before,
+        .login-bg::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            animation: orbFloat 8s ease-in-out infinite alternate;
+        }
+        .login-bg::before {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(79,70,229,0.35) 0%, transparent 70%);
+            top: -15%;
+            left: -10%;
+        }
+        .login-bg::after {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%);
+            bottom: -10%;
+            right: -5%;
+            animation-delay: -4s;
+        }
+
+        @keyframes orbFloat {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(30px, 20px) scale(1.08); }
+        }
+
+        /* Grid dots background */
+        .login-bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+            background-size: 32px 32px;
+            pointer-events: none;
+        }
+
+        /* Login card */
+        .login-card {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 16px;
+            padding: 2.75rem 2.5rem;
+            width: 100%;
+            max-width: 22rem;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(79,70,229,0.2);
+            animation: cardEntry 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes cardEntry {
+            from { opacity: 0; transform: translateY(24px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0)    scale(1);    }
+        }
+
+        .login-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .login-logo img {
+            height: 3.25rem;
+            width: auto;
+            filter: drop-shadow(0 4px 12px rgba(79,70,229,0.4)) brightness(1.15);
+        }
+
+        .login-logo-sub {
+            font-size: 0.775rem;
+            color: rgba(255,255,255,0.50);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .login-title {
+            font-size: 1.375rem;
+            font-weight: 800;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 1.75rem;
+            letter-spacing: -0.01em;
+        }
+
+        /* Inputs inside dark card */
+        .login-input-group {
+            margin-bottom: 1rem;
+        }
+
+        .login-input-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.70);
+            margin-bottom: 0.4rem;
+            letter-spacing: 0.02em;
+        }
+
+        .login-input-group .input-wrap {
+            position: relative;
+        }
+
+        .login-input-group .input-wrap i {
+            position: absolute;
+            left: 0.875rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.30);
+            font-size: 0.875rem;
+            pointer-events: none;
+        }
+
+        .login-input-group input {
+            width: 100%;
+            padding: 0.65rem 0.875rem 0.65rem 2.5rem;
+            background: rgba(255,255,255,0.07);
+            border: 1.5px solid rgba(255,255,255,0.10);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+
+        .login-input-group input::placeholder {
+            color: rgba(255,255,255,0.28);
+        }
+
+        .login-input-group input:focus {
+            background: rgba(255,255,255,0.10);
+            border-color: rgba(79,70,229,0.8);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.25);
+        }
+
+        /* Error list inside dark card */
+        .login-errorlist {
+            list-style: none;
+            padding: 0;
+            margin-top: 0.3rem;
+        }
+
+        .login-errorlist li {
+            font-size: 0.775rem;
+            color: #FCA5A5;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .login-errorlist li::before {
+            content: '\f06a';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+        }
+
+        /* Non-field errors */
+        .login-non-field-errors {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.35);
+            border-radius: 8px;
+            padding: 0.65rem 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .login-non-field-errors li {
+            font-size: 0.8125rem;
+            color: #FCA5A5;
+            list-style: none;
+        }
+
+        /* Submit button */
+        .login-submit {
+            width: 100%;
+            padding: 0.75rem 1.25rem;
+            background: linear-gradient(135deg, #4F46E5, #6366F1);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9375rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 14px rgba(79,70,229,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .login-submit:hover {
+            background: linear-gradient(135deg, #4338CA, #4F46E5);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79,70,229,0.55);
+        }
+
+        .login-submit:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(79,70,229,0.35);
+        }
+
+        /* Password toggle */
+        .toggle-pw {
+            position: absolute;
+            right: 0.875rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.35);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 0.875rem;
+            transition: color 0.15s;
+        }
+
+        .toggle-pw:hover { color: rgba(255,255,255,0.8); }
+
+        /* Bottom tagline */
+        .login-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.28);
+        }
+    </style>
 </head>
-<body class="bg-pale-blue-bg flex justify-center items-center min-h-screen text-charcoal-text font-inter p-4">
-<div class="login-container bg-dark-blue-gray p-10 rounded-xl shadow-2xl max-w-sm w-full text-center transform transition-all duration-300 hover:scale-105">
-    <div class="logo mb-8">
-        <img src="{% static 'img/vidhemalogo.webp' %}" alt="VIDHEMA Logo"
-             class="h-16 mx-auto mb-4 filter drop-shadow-lg">
-        <p class="text-white text-sm">Employee Attendance System</p>
+<body>
+
+<div class="login-bg">
+    <div class="login-bg-grid"></div>
+
+    <div class="login-card">
+        <div class="login-logo">
+            <img src="{% static 'img/vidhemalogo.webp' %}" alt="VIDHEMA Logo">
+            <span class="login-logo-sub">Employee Attendance System</span>
+        </div>
+
+        <h1 class="login-title">Welcome back</h1>
+
+        <form method="post" id="loginForm" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <ul class="login-non-field-errors">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {# Username #}
+            <div class="login-input-group">
+                {{ form.username.label_tag }}
+                <div class="input-wrap">
+                    <i class="fa-solid fa-user"></i>
+                    {{ form.username|add_class:""|attr:"placeholder:Enter username"|attr:"autocomplete:username"|attr:"id:id_username" }}
+                </div>
+                {% if form.username.errors %}
+                    <ul class="login-errorlist">
+                        {% for error in form.username.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            {# Password #}
+            <div class="login-input-group">
+                {{ form.password.label_tag }}
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock"></i>
+                    {{ form.password|add_class:""|attr:"placeholder:Enter password"|attr:"autocomplete:current-password"|attr:"id:id_password" }}
+                    <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password visibility">
+                        <i class="fa-solid fa-eye" id="togglePwIcon"></i>
+                    </button>
+                </div>
+                {% if form.password.errors %}
+                    <ul class="login-errorlist">
+                        {% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="login-submit" id="loginBtn">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                Sign In
+            </button>
+        </form>
+
+        <p class="login-footer">
+            &copy; {% now "Y" %} VIDHEMA Technologies
+        </p>
     </div>
-    <h2 class="text-2xl font-bold mb-6 text-white">Login</h2>
-    <form method="post" class="space-y-5">
-        {% csrf_token %}
-        <div class="form-group text-white">
-            {{ form.username.label_tag }}
-            {{ form.username|add_class:"w-full text-charcoal-text px-4 py-2 border border-light-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue" }}
-            {% if form.username.errors %}
-                <ul class="errorlist">{% for error in form.username.errors %}
-                    <li>{{ error }}</li>{% endfor %}</ul>
-            {% endif %}
-        </div>
-        <div class="form-group text-white">
-            {{ form.password.label_tag }}
-            {{ form.password|add_class:"w-full text-charcoal-text px-4 py-2 border border-light-gray-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue" }}
-            {% if form.password.errors %}
-                <ul class="errorlist">{% for error in form.password.errors %}
-                    <li>{{ error }}</li>{% endfor %}</ul>
-            {% endif %}
-        </div>
-        {% if form.non_field_errors %}
-            <ul class="errorlist">{% for error in form.non_field_errors %}
-                <li>{{ error }}</li>{% endfor %}</ul>
-        {% endif %}
-        <button type="submit"
-                class="login-button w-full bg-primary-blue hover:bg-light-sky-blue text-white font-semibold py-2 px-4 rounded-md transition duration-300 ease-in-out">
-            Login
-        </button>
-    </form>
 </div>
+
+<script>
+    // Password visibility toggle
+    const togglePw   = document.getElementById('togglePw');
+    const toggleIcon = document.getElementById('togglePwIcon');
+    const pwInput    = document.getElementById('id_password');
+
+    if (togglePw && pwInput) {
+        togglePw.addEventListener('click', () => {
+            const isHidden = pwInput.type === 'password';
+            pwInput.type = isHidden ? 'text' : 'password';
+            toggleIcon.className = isHidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+        });
+    }
+
+    // Button loading state on submit
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn  = document.getElementById('loginBtn');
+
+    if (loginForm && loginBtn) {
+        loginForm.addEventListener('submit', () => {
+            loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in…';
+            loginBtn.disabled = true;
+        });
+    }
+</script>
 </body>
 </html>

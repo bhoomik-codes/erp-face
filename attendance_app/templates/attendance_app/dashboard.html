@@ -4,121 +4,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Admin Dashboard{% endblock %}</title>
-    {# Link to the consolidated admin styles #}
+    <meta name="description" content="VIDHEMA ERP — Employee Attendance Management System">
+    <title>{% block title %}Admin Dashboard — VIDHEMA{% endblock %}</title>
+
+    {# Design System CSS — single source of truth #}
     <link rel="stylesheet" href="{% static 'css/admin_styles.css' %}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    {# Font Awesome for icons #}
+
+    {# Font Awesome icons #}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    {# Tailwind CDN (layout utilities only; tokens live in admin_styles.css) #}
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Tailwind CSS configuration for custom colors based on the new blue/gray theme
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'primary-blue': '#0066CC', // Strong Blue for primary actions/active states
-                        'dark-blue-gray': '#1A2631', // Dark background for sidebar
-                        'charcoal-text': '#36454F', // Dark text color
-                        'light-sky-blue': '#87CEEB', // Lighter blue for accents
-                        'pale-blue-bg': '#F0F8FF', // Very light background for main content
-                        'silver-gray': '#C0C0C0', // For subtle text/borders
-                        'light-gray-border': '#E0E0E0', // For borders
-                        'success-green': '#28A745', // A standard green for success messages
-                        'warning-orange': '#FFC107', // A standard orange for warnings
-                        'danger-red': '#DC3545', // A standard red for errors/danger
+                        'primary':        '#4F46E5',
+                        'primary-hover':  '#4338CA',
+                        'primary-light':  '#EEF2FF',
+                        'sidebar':        '#0F172A',
+                        'sidebar-hover':  '#1E293B',
+                        'surface-bg':     '#F8FAFC',
+                        'surface-card':   '#FFFFFF',
+                        'text-main':      '#1E293B',
+                        'text-muted':     '#64748B',
+                        'border-base':    '#E2E8F0',
+                        'success':        '#10B981',
+                        'danger':         '#EF4444',
+                        'warning':        '#F59E0B',
+                        'info':           '#3B82F6',
+                        /* Legacy aliases kept for any un-migrated template class references */
+                        'primary-blue':   '#4F46E5',
+                        'dark-blue-gray': '#0F172A',
+                        'charcoal-text':  '#1E293B',
+                        'light-sky-blue': '#EEF2FF',
+                        'pale-blue-bg':   '#F8FAFC',
+                        'silver-gray':    '#94A3B8',
+                        'light-gray-border': '#E2E8F0',
+                        'success-green':  '#10B981',
+                        'warning-orange': '#F59E0B',
+                        'danger-red':     '#EF4444',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'DEFAULT': '8px',
                     }
                 }
             }
         }
     </script>
-    {% block head_extra %}{% endblock %} {# For page-specific head content like Chart.js or Leaflet CSS #}
+
+    {% block head_extra %}{% endblock %}
 </head>
-<body class="flex min-h-screen bg-pale-blue-bg font-inter text-charcoal-text">
-{# The CSRF token should be within the body to be reliably accessible by JavaScript #}
+<body class="flex min-h-screen bg-surface-bg font-inter text-text-main">
+
 {% csrf_token %}
 
-{# Sidebar Navigation #}
-<aside class="w-64 bg-dark-blue-gray text-white flex flex-col p-6 shadow-lg fixed h-screen z-50">
-    <div class="logo-section mb-10 text-center">
-        <img src="{% static 'img/vidhemalogo.webp' %}" alt="VIDHEMA Logo"
-             class="h-10 mx-auto mb-4 filter drop-shadow-lg">
+{# ─── SIDEBAR ───────────────────────────────────────────── #}
+<aside>
+    {# Logo #}
+    <div class="logo-section">
+        <img src="{% static 'img/vidhemalogo.webp' %}" alt="VIDHEMA Logo">
+        <span class="logo-brand">VIDHEMA ERP</span>
     </div>
-    <nav class="flex-1 flex flex-col space-y-2 font-semibold">
+
+    {# Navigation #}
+    <nav>
         <a href="{% url 'attendance_app:admin_dashboard' %}"
-           class="nav-link px-4 py-2 transition duration-300 flex items-center
-              {% if current_page == 'dashboard' %}bg-primary-blue text-white shadow-md
-              {% else %}hover:bg-light-sky-blue hover:text-dark-blue-gray{% endif %}">
-            <i class="fa-solid fa-home mr-3"></i> Dashboard
+           id="nav-dashboard"
+           class="nav-link {% if current_page == 'dashboard' %}active-nav-link{% endif %}">
+            <i class="fa-solid fa-gauge-high"></i>
+            <span>Dashboard</span>
         </a>
 
         <a href="{% url 'attendance_app:employee_list' %}"
-           class="nav-link px-4 py-2 transition duration-300 flex items-center
-              {% if current_page in 'employee_list register_employee employee_update' %}bg-primary-blue text-white shadow-md
-              {% else %}hover:bg-light-sky-blue hover:text-dark-blue-gray{% endif %}">
-            <i class="fa-solid fa-users mr-3"></i> Employees
+           id="nav-employees"
+           class="nav-link {% if current_page in 'employee_list register_employee employee_update' %}active-nav-link{% endif %}">
+            <i class="fa-solid fa-users"></i>
+            <span>Employees</span>
         </a>
 
         <a href="{% url 'attendance_app:attendance_report' %}"
-           class="nav-link px-4 py-2 transition duration-300 flex items-center
-              {% if current_page == 'view_attendance' %}bg-primary-blue text-white shadow-md
-              {% else %}hover:bg-light-sky-blue hover:text-dark-blue-gray{% endif %}">
-            <i class="fa-solid fa-chart-bar mr-3"></i> Attendance Report
+           id="nav-attendance"
+           class="nav-link {% if current_page == 'view_attendance' %}active-nav-link{% endif %}">
+            <i class="fa-solid fa-chart-bar"></i>
+            <span>Attendance Report</span>
         </a>
 
         <a href="{% url 'attendance_app:reports' %}"
-           class="nav-link px-4 py-2 transition duration-300 flex items-center
-              {% if current_page == 'reports' %}bg-primary-blue text-white shadow-md
-              {% else %}hover:bg-light-sky-blue hover:text-dark-blue-gray{% endif %}">
-            <i class="fa-solid fa-file-invoice mr-3"></i> Reports
+           id="nav-reports"
+           class="nav-link {% if current_page == 'reports' %}active-nav-link{% endif %}">
+            <i class="fa-solid fa-file-chart-column"></i>
+            <span>Reports</span>
         </a>
 
         <a href="{% url 'attendance_app:admin_settings' %}"
-           class="nav-link px-4 py-2 transition duration-300 flex items-center
-              {% if current_page == 'settings' %}bg-primary-blue text-white shadow-md
-              {% else %}hover:bg-light-sky-blue hover:text-dark-blue-gray{% endif %}">
-            <i class="fa-solid fa-gear mr-3"></i> Settings
+           id="nav-settings"
+           class="nav-link {% if current_page == 'settings' %}active-nav-link{% endif %}">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Settings</span>
         </a>
 
         <a href="{% url 'attendance_app:admin_logout' %}"
-           class="px-4 py-2 mt-4 bg-danger-red text-white hover:bg-red-700 flex items-center transition duration-300 rounded-md">
-            <i class="fa-solid fa-right-from-bracket mr-3"></i> Logout
+           id="nav-logout"
+           class="nav-logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
         </a>
     </nav>
 </aside>
 
-{# Main Content Area #}
-<main class="flex-1 p-8 overflow-y-auto bg-pale-blue-bg ml-64 p-6">
-    {# Top Navigation Bar #}
+{# ─── MAIN CONTENT ──────────────────────────────────────── #}
+<main class="flex-1 w-full">
+    {# Top Nav Bar #}
     <header class="top-nav">
-        <h2 class="font-bold text-3xl text-charcoal-text">{% block page_heading %}Dashboard{% endblock %}</h2>
-        <div class="profile flex items-center space-x-3">
-            <img class="aspect-square size-12 rounded-full outline outline-offset-2 outline-light-gray-border shadow-md"
-                 src="{% static 'img/avatar.png' %}" alt="User"/>
-            <span class="text-charcoal-text font-semibold text-lg">Admin</span>
+        <h2>{% block page_heading %}Dashboard{% endblock %}</h2>
+        <div class="profile">
+            <img src="{% static 'img/avatar.png' %}" alt="Admin Avatar">
+            <span>Admin</span>
         </div>
     </header>
 
-    {# Content Block for specific pages #}
-    {% block content %}
-        {# Default content or empty if pages are always extending this #}
-    {% endblock %}
+    {# Page Content #}
+    <div class="fade-in-up">
+        {% block content %}{% endblock %}
+    </div>
 </main>
 
-{# Confirmation Modal - now placed at the root of the body for correct fixed positioning #}
-<div id="deleteModal" class="modal">
+{# ─── DELETE CONFIRMATION MODAL ─────────────────────────── #}
+<div id="deleteModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalHeading">
     <div class="modal-content">
-        <p class="text-charcoal-text">Are you sure you want to delete employee <span id="modalEmployeeName"
-                                                                                     class="font-bold"></span>
-            (<span id="modalEmployeeId" class="font-bold"></span>)?</p>
-        <p class="text-sm text-danger-red mt-2">This action cannot be undone.</p>
+        <div style="width:56px;height:56px;border-radius:50%;background:var(--clr-error-bg);
+                    display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">
+            <i class="fa-solid fa-trash-can" style="color:var(--clr-error);font-size:1.4rem;"></i>
+        </div>
+        <p id="modalHeading" style="font-size:1.0625rem;font-weight:700;margin-bottom:0.5rem;">
+            Delete Employee?
+        </p>
+        <p style="margin-bottom:1.5rem;">
+            Are you sure you want to remove
+            <strong id="modalEmployeeName"></strong>
+            (<span id="modalEmployeeId" style="font-family:monospace;font-size:0.875rem;"></span>)?
+        </p>
+        <p style="font-size:0.8125rem;color:var(--clr-error);margin-bottom:1.75rem;font-weight:500;">
+            <i class="fa-solid fa-triangle-exclamation"></i>&ensp;This action cannot be undone.
+        </p>
         <div class="modal-buttons">
-            <button id="confirmDeleteBtn" class="confirm-btn">Delete</button>
-            <button id="cancelDeleteBtn" class="cancel-btn">Cancel</button>
+            <button id="confirmDeleteBtn" class="delete-btn btn-md">
+                <i class="fa-solid fa-trash-can"></i> Delete
+            </button>
+            <button id="cancelDeleteBtn" class="back-btn btn-md">
+                Cancel
+            </button>
         </div>
     </div>
 </div>
 
-{% block scripts %}
-{% endblock %}
+{# ─── TOAST CONTAINER (injected by toast.js if absent) ──── #}
+<div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+{# ─── SCRIPTS ───────────────────────────────────────────── #}
+{# Toast system loads first so all other scripts can use showToast() #}
+<script src="{% static 'js/toast.js' %}"></script>
+
+{% if messages %}
+{# Bridge: render Django messages as hidden data elements, read by toast.js on DOMContentLoaded #}
+{% for msg in messages %}
+<div class="django-message-data"
+     data-text="{{ msg.message|escapejs }}"
+     data-tags="{{ msg.tags }}"
+     style="display:none;"></div>
+{% endfor %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.django-message-data').forEach(function (el) {
+        var text = el.dataset.text;
+        var tags = el.dataset.tags || '';
+        var type = tags.indexOf('error')   !== -1 ? 'error'
+                 : tags.indexOf('success') !== -1 ? 'success'
+                 : tags.indexOf('warning') !== -1 ? 'warning'
+                 : 'info';
+        if (typeof window.showToast === 'function') {
+            window.showToast(text, type);
+        }
+        el.parentNode.removeChild(el);
+    });
+});
+</script>
+{% endif %}
+
+
+{% block scripts %}{% endblock %}
+
+
 </body>
 </html>

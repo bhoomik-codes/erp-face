@@ -16,66 +16,62 @@
         <div class="reports-grid">
             {# Emotion Tracking Trends Chart #}
             <div class="reports-card">
-                <h3 style="font-size: 30px; font-weight: bold">Emotion Tracking Trends</h3>
+                <h3>Emotion Tracking Trends</h3>
                 <div class="flex justify-end mb-4 space-x-2">
-                    <button id="emotionWeeklyBtn" class="report-btn" data-chart="emotion" data-period="weekly">Weekly
-                    </button>
-                    <button class="report-btn" data-chart="emotion" data-period="monthly">Monthly</button>
-                    <button class="report-btn" data-chart="emotion" data-period="yearly">Yearly</button>
+                    <button id="emotionWeeklyBtn" class="report-btn btn-sm" data-chart="emotion" data-period="weekly">Weekly</button>
+                    <button class="report-btn btn-sm" data-chart="emotion" data-period="monthly">Monthly</button>
+                    <button class="report-btn btn-sm" data-chart="emotion" data-period="yearly">Yearly</button>
                 </div>
                 <div class="chart-container">
                     <canvas id="emotionTrendsChart"></canvas>
                 </div>
                 <div class="flex justify-end mt-4">
-                    <button class="download-chart report-btn" data-target="emotionTrendsChart">Download</button>
+                    <button class="download-chart report-btn btn-sm" data-target="emotionTrendsChart">Download</button>
                 </div>
             </div>
 
             {# Leave Type Distribution Chart (Static - no period selection) #}
             <div class="reports-card">
-                <h3 style="font-size: 30px; font-weight: bold">Leave Type Distribution</h3>
+                <h3>Leave Type Distribution</h3>
                 <div class="chart-container">
                     <canvas id="leaveDistributionChart"></canvas>
                 </div>
                 <div class="flex justify-end mt-4">
-                    <button class="download-chart report-btn" data-target="leaveDistributionChart">Download</button>
+                    <button class="download-chart report-btn btn-sm" data-target="leaveDistributionChart">Download</button>
                 </div>
             </div>
 
             {# Late Arrivals vs On-Time Stats Chart #}
             <div class="reports-card">
-                <h3 style="font-size: 30px; font-weight: bold">Late Arrivals vs On-Time Stats</h3>
+                <h3>Late Arrivals vs On-Time Stats</h3>
                 <div class="flex justify-end mb-4 space-x-2">
-                    <button id="arrivalWeeklyBtn" class="report-btn" data-chart="arrival" data-period="weekly">Weekly
-                    </button>
-                    <button class="report-btn" data-chart="arrival" data-period="monthly">Monthly</button>
-                    <button class="report-btn" data-chart="arrival" data-period="yearly">Yearly</button>
+                    <button id="arrivalWeeklyBtn" class="report-btn btn-sm" data-chart="arrival" data-period="weekly">Weekly</button>
+                    <button class="report-btn btn-sm" data-chart="arrival" data-period="monthly">Monthly</button>
+                    <button class="report-btn btn-sm" data-chart="arrival" data-period="yearly">Yearly</button>
                 </div>
 
                 <div class="chart-container">
                     <canvas id="arrivalStatsChart"></canvas>
                 </div>
                 <div class="flex justify-end mt-4">
-                    <button class="download-chart report-btn" data-target="arrivalStatsChart">Download</button>
+                    <button class="download-chart report-btn btn-sm" data-target="arrivalStatsChart">Download</button>
                 </div>
             </div>
 
             {# Attendance Trends Over Time Chart #}
             <div class="reports-card">
-                <h3 style="font-size: 30px; font-weight: bold">Attendance Trends Over Time</h3>
+                <h3>Attendance Trends Over Time</h3>
                 <div class="flex justify-end mb-4 space-x-2">
-                    <button id="attendanceWeeklyBtn" class="report-btn" data-chart="attendance" data-period="weekly">
-                        Weekly
-                    </button>
-                    <button class="report-btn" data-chart="attendance" data-period="monthly">Monthly</button>
-                    <button class="report-btn" data-chart="attendance" data-period="yearly">Yearly</button>
+                    <button id="attendanceWeeklyBtn" class="report-btn btn-sm" data-chart="attendance" data-period="weekly">Weekly</button>
+                    <button class="report-btn btn-sm" data-chart="attendance" data-period="monthly">Monthly</button>
+                    <button class="report-btn btn-sm" data-chart="attendance" data-period="yearly">Yearly</button>
                 </div>
 
                 <div class="chart-container">
                     <canvas id="attendanceTrendsChart"></canvas>
                 </div>
                 <div class="flex justify-end mt-4">
-                    <button class="download-chart report-btn" data-target="attendanceTrendsChart">Download</button>
+                    <button class="download-chart report-btn btn-sm" data-target="attendanceTrendsChart">Download</button>
                 </div>
             </div>
         </div>

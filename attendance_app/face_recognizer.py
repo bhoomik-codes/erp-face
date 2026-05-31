@@ -1,15 +1,32 @@
 # attendance_app/face_recognizer.py
-import face_recognition
 import os
 import pickle
-import numpy as np
-from django.conf import settings
-import requests
-import io
-import cv2
 import logging
 
 logger = logging.getLogger(__name__)
+
+# face_recognition requires dlib which needs native compilation.
+# Make these imports optional so the server can start even without them.
+try:
+    import face_recognition
+    import numpy as np
+    import cv2
+    import requests
+    import io
+    FACE_RECOGNITION_AVAILABLE = True
+except ImportError as _fr_err:
+    face_recognition = None
+    np = None
+    cv2 = None
+    requests = None
+    io = None
+    FACE_RECOGNITION_AVAILABLE = False
+    logger.warning(
+        f"face_recognition or cv2 not available ({_fr_err}). "
+        "Face recognition features will be disabled. "
+        "Install dlib + face_recognition to enable them."
+    )
+
 
 class FaceRecognitionSystem:
     _instance = None
@@ -36,6 +53,13 @@ class FaceRecognitionSystem:
         face encodings into a set of in-memory lists. This is done once when
         the application starts to optimize for real-time face recognition.
         """
+        self._known_face_encodings = []
+        self._known_face_names = []
+        self._known_employee_ids = []
+
+        if not FACE_RECOGNITION_AVAILABLE:
+            return
+
         from .models import Employee
         try:
             employees = Employee.objects.all().only('employee_id', 'name', 'face_encoding')
@@ -73,6 +97,10 @@ class FaceRecognitionSystem:
         Returns:
             bool: True if registration is successful, False otherwise.
         """
+        if not FACE_RECOGNITION_AVAILABLE:
+            logger.warning(f"Face recognition disabled. Skipping encoding for employee ID {employee_id}.")
+            return True  # Return True to allow employee registration to proceed without encoding
+
         from .models import Employee
 
         try:
@@ -116,6 +144,23 @@ class FaceRecognitionSystem:
         This is a robust version of the code we developed previously.
         """
         try:
+            if image_url.startswith('/'):
+                # It's a local file URL (e.g., /media/...)
+                from django.conf import settings
+                import os
+                
+                # Strip the MEDIA_URL prefix to get the relative path
+                if hasattr(settings, 'MEDIA_URL') and image_url.startswith(settings.MEDIA_URL):
+                    local_path = image_url[len(settings.MEDIA_URL):]
+                else:
+                    local_path = image_url.lstrip('/')
+                
+                full_path = os.path.join(settings.MEDIA_ROOT, local_path)
+                
+                with open(full_path, 'rb') as f:
+                    image_data = face_recognition.load_image_file(f)
+                return image_data
+
             headers = {'User-Agent': 'Mozilla/5.0'}
             response = requests.get(image_url, headers=headers, timeout=10)
             response.raise_for_status()
@@ -161,6 +206,9 @@ class FaceRecognitionSystem:
         Returns:
             list: A list of names of the recognized employees.
         """
+        if not FACE_RECOGNITION_AVAILABLE:
+            return []
+
         # The frame received from the view is already correctly formatted as rgb_frame.
         face_locations = face_recognition.face_locations(frame)
         face_encodings = face_recognition.face_encodings(frame, face_locations)

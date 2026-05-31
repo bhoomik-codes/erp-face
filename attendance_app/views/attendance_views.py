@@ -8,6 +8,7 @@ import pytz
 from datetime import datetime, date, timedelta, time
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
@@ -22,19 +23,39 @@ from django.templatetags.static import static
 from ..services.attendance_manager import AttendanceManager
 from ..face_recognizer import get_face_recognition_system
 from ..forms import EmployeeForm
-from ..models import Employee, AttendanceRecord, LocationSetting, LeaveHistory, Break
+from ..models import Employee, AttendanceRecord, LocationSetting, LeaveHistory
+import boto3
 
 logger = logging.getLogger(__name__)
 
 
+from django.core.files.storage import default_storage
+
 def upload_photo_to_cloud_storage(photo_file):
     """
-    A real function to upload a photo to an Amazon S3 bucket.
+    Uploads a photo to Amazon S3.
+    If AWS credentials are not set in the environment, falls back to local storage.
     """
+    aws_access_key = os.environ.get('AWS_ACCESS_KEY_ID')
+    
+    if not aws_access_key:
+        # Fall back to local storage
+        logger.info("AWS_ACCESS_KEY_ID not set. Saving photo locally.")
+        try:
+            filename, file_extension = os.path.splitext(photo_file.name)
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            local_filename = f"employee_photos/{filename}_{timestamp}{file_extension}"
+            
+            saved_path = default_storage.save(local_filename, photo_file)
+            return default_storage.url(saved_path)
+        except Exception as e:
+            logger.error(f"Failed to save photo locally: {e}")
+            return None
+
     try:
         s3 = boto3.client(
             's3',
-            aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+            aws_access_key_id=aws_access_key,
             aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
             region_name=os.environ.get('AWS_S3_REGION_NAME')
         )
@@ -58,7 +79,6 @@ def upload_photo_to_cloud_storage(photo_file):
 
 
 @require_http_methods(["GET", "POST"])
-@transaction.atomic
 @login_required
 def register_employee(request):
     """
@@ -89,43 +109,38 @@ def register_employee(request):
                     return render(request, 'attendance_app/register_employee.html',
                                   {'form': form, 'current_page': 'register_employee'})
 
-            employee = form.save(commit=False)
             if photo_url:
-                employee.photo = photo_url
+                form.instance.photo = photo_url
 
-            # Save the employee first to get a Django object
-            employee.save()
+            face_error = False
+            try:
+                with transaction.atomic():
+                    employee = form.save()
 
-            if employee.role == 'TEAM_LEADER':
-                employee.team_members.set(form.cleaned_data['team_members'])
-            else:
-                employee.team_members.clear()
-
-            # Now, attempt to register the face encoding.
-            # If this fails, the transaction will be rolled back.
-            face_recognition_system = get_face_recognition_system()
-            if photo_url:
-                try:
-                    if not face_recognition_system.register_employee(employee.employee_id):
-                        # If face recognition fails, add an error and roll back the database changes
-                        logger.warning(
-                            f"Failed to generate face encoding for employee {employee.name}. Rolling back transaction.")
-                        form.add_error('photo',
-                                       "Failed to generate face encoding from the photo. Please try a different one.")
-                        raise ValueError("Face encoding failed, rolling back.")  # Force rollback
-                except Exception as e:
-                    # Catch any exception during face registration and force a rollback
+                    face_recognition_system = get_face_recognition_system()
+                    if photo_url:
+                        if not face_recognition_system.register_employee(employee.employee_id):
+                            logger.warning(
+                                f"Failed to generate face encoding for employee {employee.name}. Rolling back transaction.")
+                            form.add_error('photo',
+                                           "Failed to generate face encoding from the photo. Please try a different one.")
+                            face_error = True
+                            raise ValueError("Face encoding failed")
+                    else:
+                        logger.warning(f"Attempted to register employee {employee.name} without a photo.")
+                        form.add_error('photo', "A profile photo is required for face recognition registration.")
+                        face_error = True
+                        raise ValueError("Photo required")
+            except Exception as e:
+                if not face_error:
                     logger.exception(
-                        f"Error during face registration for employee {employee.name}. Rolling back transaction.")
+                        f"Error during face registration for employee {form.instance.name}. Rolling back transaction.")
                     form.add_error('photo', "An error occurred during face encoding. Please try again.")
-                    raise e
-            else:
-                logger.warning(f"Attempted to register employee {employee.name} without a photo.")
-                form.add_error('photo', "A profile photo is required for face recognition registration.")
-                employee.delete()
+                return render(request, 'attendance_app/register_employee.html', {'form': form, 'current_page': 'register_employee'})
 
             logger.info(
                 f"Employee {employee.name} ({employee.employee_id}) registered successfully with role {employee.role}.")
+            messages.success(request, f"Employee '{employee.name}' registered successfully!")
             return redirect('attendance_app:employee_list')
     else:
         form = EmployeeForm()
@@ -148,7 +163,6 @@ def employee_list(request):
 
 
 @require_http_methods(["GET", "POST"])
-@transaction.atomic
 @login_required
 def employee_update(request, employee_id):
     """
@@ -180,32 +194,31 @@ def employee_update(request, employee_id):
                     form.add_error('photo', "Failed to upload new photo. Please try a different one.")
                     return render(request, 'attendance_app/employee_update.html', {'form': form, 'employee': employee})
 
-            employee = form.save(commit=False)
             if photo_url:
-                employee.photo = photo_url
+                form.instance.photo = photo_url
 
-            employee.save()
+            face_error = False
+            try:
+                with transaction.atomic():
+                    employee = form.save()
 
-            if employee.role == 'TEAM_LEADER':
-                employee.team_members.set(form.cleaned_data['team_members'])
-            else:
-                employee.team_members.clear()
-
-            # Only attempt to register face encoding if a new photo was uploaded
-            if photo_url:
-                face_recognition_system = get_face_recognition_system()
-                try:
-                    if not face_recognition_system.register_employee(employee.employee_id):
-                        form.add_error('photo',
-                                       "Failed to generate face encoding from the new photo. Please try a different one.")
-                        raise ValueError("Face encoding failed, rolling back.")
-                except Exception as e:
+                    # Only attempt to register face encoding if a new photo was uploaded
+                    if photo_url:
+                        face_recognition_system = get_face_recognition_system()
+                        if not face_recognition_system.register_employee(employee.employee_id):
+                            form.add_error('photo',
+                                           "Failed to generate face encoding from the new photo. Please try a different one.")
+                            face_error = True
+                            raise ValueError("Face encoding failed")
+            except Exception as e:
+                if not face_error:
                     logger.exception(
-                        f"Error during face registration for employee {employee.name}. Rolling back transaction.")
+                        f"Error during face registration for employee {form.instance.name}. Rolling back transaction.")
                     form.add_error('photo', "An error occurred during face encoding. Please try again.")
-                    raise e
+                return render(request, 'attendance_app/employee_update.html', {'form': form, 'employee': form.instance, 'current_page': 'employee_update'})
 
             logger.info(f"Employee {employee.name} updated successfully.")
+            messages.success(request, f"Employee '{employee.name}' updated successfully!")
             return redirect('attendance_app:employee_list')
     else:
         form = EmployeeForm(instance=employee)
@@ -249,7 +262,7 @@ def employee_delete(request, employee_id):
 
         logger.info(f"Employee {employee.name} (ID: {employee.employee_id}) deleted from database and cache.")
 
-        return JsonResponse({'status': 'success', 'message': f'Employee {employee_id} deleted successfully.'})
+        return JsonResponse({'status': 'success', 'message': f"Employee '{employee.name}' has been deleted successfully."}, status=200)
     except Exception as e:
         logger.exception(f"Error deleting employee {employee_id}:")
         return JsonResponse({'status': 'error', 'message': f'An error occurred during deletion: {str(e)}'}, status=500)
@@ -273,12 +286,30 @@ def recognize_face_for_prompt(request):
     """
     try:
         data = json.loads(request.body)
-        frame_data = data.get('frame')
-        # ... (rest of the recognition logic remains the same)
-        # ... (assuming face_recognition_system and recognition logic are correct)
+        frame_data = data.get('image') or data.get('frame')
+        
+        if not frame_data:
+            return JsonResponse({'status': 'error', 'message': 'No frame provided.'}, status=400)
 
-        # Placeholder for face recognition result
-        recognized_name = "Jane Doe"  # Replace with actual recognition result
+        # Parse the base64 image data
+        if ',' in frame_data:
+            imgstr = frame_data.split(',')[1]
+        else:
+            imgstr = frame_data
+            
+        img_bytes = base64.b64decode(imgstr)
+        np_arr = np.frombuffer(img_bytes, np.uint8)
+        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        
+        if frame is None:
+            return JsonResponse({'status': 'error', 'message': 'Invalid frame data.'}, status=400)
+            
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        face_recognition_system = get_face_recognition_system()
+        recognized_names = face_recognition_system.recognize_face(rgb_frame)
+        
+        recognized_name = recognized_names[0] if recognized_names else "Unknown"
 
         if recognized_name and recognized_name != "Unknown":
             # If a face is recognized, return a success message and prompt for action
@@ -397,8 +428,8 @@ def mark_attendance_with_gesture(request):
                 # Just mark as out time
                 AttendanceRecord.objects.create(
                     employee=employee,
-                    date=today,
-                    time=current_time,
+                    date=current_date,
+                    check_in_time=current_time,
                     attendance_type='OUT',
                     remarks="Out Time (break tracking not available)."
                 )
@@ -445,7 +476,7 @@ def recent_attendance_records(request):
     This function has been updated to correctly handle the new `breaks` array.
     """
     try:
-        cutoff_date = timezone.localdate() - timedelta(days=7)
+        cutoff_date = timezone.now() - timedelta(days=7)
         logger.debug(f"Cutoff date for recent records: {cutoff_date}")
 
         recent_employees_with_latest_activity = Employee.objects.filter(
@@ -456,7 +487,7 @@ def recent_attendance_records(request):
         for employee in recent_employees_with_latest_activity:
             employee_latest_record_overall = AttendanceRecord.objects.filter(
                 employee=employee
-            ).order_by('-date', '-time').first()
+            ).order_by('-date', '-created_at').first()
 
             if not employee_latest_record_overall:
                 logger.warning(
@@ -489,8 +520,8 @@ def recent_attendance_records(request):
                 ) = AttendanceManager.calculate_working_hours(employee, latest_date_for_employee)
 
                 # Format times and durations for display
-                in_time_str = in_record.time.strftime('%I:%M %p') if in_record and in_record.time else '-'
-                out_time_str = out_record.time.strftime('%I:%M %p') if out_record and out_record.time else '-'
+                in_time_str = in_record.check_in_time.strftime('%I:%M %p') if in_record and in_record.check_in_time else '-'
+                out_time_str = out_record.check_out_time.strftime('%I:%M %p') if out_record and out_record.check_out_time else '-'
 
                 lunch_in_str, lunch_out_str = '-', '-'
                 # Break tracking is not available in SQLite version
@@ -504,7 +535,7 @@ def recent_attendance_records(request):
                 combined_remarks = "; ".join(remarks_list) if remarks_list else None
 
                 is_late_for_record_display = False
-                if in_record and in_record.time and in_record.time > AttendanceManager.IN_TIME_END:
+                if in_record and in_record.check_in_time and in_record.check_in_time > AttendanceManager.IN_TIME_END:
                     is_late_for_record_display = True
 
                 data.append({

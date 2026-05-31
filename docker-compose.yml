@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: erp-face-web
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app               # Sync local edits to the container automatically
+      - /app/venv            # Hide local venv from the container
+      - media_volume:/app/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=vidAttendence2.settings
+      # - AWS_ACCESS_KEY_ID=your_key  # Uncomment to use AWS
+      # - AWS_SECRET_ACCESS_KEY=your_secret
+      # - AWS_STORAGE_BUCKET_NAME=your_bucket
+      # - AWS_S3_REGION_NAME=your_region
+    restart: unless-stopped
+
+volumes:
+  media_volume:

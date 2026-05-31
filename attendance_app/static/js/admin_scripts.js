@@ -1,110 +1,118 @@
+// attendance_app/static/js/admin_scripts.js
+// Dashboard filtering logic — period buttons & AJAX data refresh
+
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("DOMContentLoaded fired. Initializing admin scripts...");
 
-    const messagesDiv = document.getElementById('messages'); // Assuming admin_dashboard.html has a messages div
+    // ── Element refs ───────────────────────────────────
+    const filterButtons             = document.querySelectorAll('.filter-button');
+    const totalAttendanceHoursCard  = document.getElementById('totalAttendanceHoursCard');
+    const totalOvertimeHoursCard    = document.getElementById('totalOvertimeHoursCard');
+    const totalAbsenteesCard        = document.getElementById('totalAbsenteesCard');
+    const topAbsenteesList          = document.getElementById('topAbsenteesList');
+    const topMaxAttendanceList      = document.getElementById('topMaxAttendanceList');
+    const topOvertimeList           = document.getElementById('topOvertimeList');
+    const topAbsenteesPeriodDisplay     = document.getElementById('topAbsenteesPeriodDisplay');
+    const topMaxAttendancePeriodDisplay = document.getElementById('topMaxAttendancePeriodDisplay');
+    const topOvertimePeriodDisplay      = document.getElementById('topOvertimePeriodDisplay');
 
-    // displayMessage is now global (defined in common_utils.js without 'export')
-    // and can be called directly via window.displayMessage.
-    // We define a local proxy function for convenience if the messagesDiv exists.
-    function localDisplayMessage(message, type) {
-        if (messagesDiv && typeof window.displayMessage === 'function') {
-            window.displayMessage(messagesDiv, message, type); // Call the global utility
-        } else if (messagesDiv) {
-            // Fallback if global displayMessage isn't loaded yet
-            messagesDiv.innerHTML = `<div class="p-3 rounded-md mb-4 text-center ${type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                ${message}
-            </div>`;
-            setTimeout(() => {
-                messagesDiv.innerHTML = '';
-            }, 5000);
-        } else {
-            console.warn("Messages div not found or global displayMessage not available. Message: ", message);
-        }
+    // ── Helper: update active button state ─────────────
+    function setActiveButton(activePeriod) {
+        filterButtons.forEach(btn => {
+            const isActive = btn.dataset.period === activePeriod;
+            btn.classList.toggle('active', isActive);
+            // Remove any legacy colour classes from old code
+            btn.classList.remove('bg-red-600', 'bg-primary-blue', 'text-white',
+                                 'bg-white', 'text-\\[\\#417893\\]',
+                                 'hover:bg-red-100', 'hover:text-red-600');
+        });
     }
 
+    // ── Helper: skeleton loader for lists ──────────────
+    function showListSkeleton(listEl) {
+        if (!listEl) return;
+        listEl.innerHTML = `
+            <li style="padding:.5rem 0;border-bottom:1px solid var(--clr-border);">
+                <div class="skeleton skeleton-text" style="width:65%"></div>
+                <div class="skeleton skeleton-text" style="width:30%"></div>
+            </li>
+            <li style="padding:.5rem 0;border-bottom:1px solid var(--clr-border);">
+                <div class="skeleton skeleton-text" style="width:70%"></div>
+                <div class="skeleton skeleton-text" style="width:25%"></div>
+            </li>
+            <li style="padding:.5rem 0;">
+                <div class="skeleton skeleton-text" style="width:55%"></div>
+                <div class="skeleton skeleton-text" style="width:35%"></div>
+            </li>`;
+    }
 
-    // --- Dashboard Filtering Logic ---
-    const filterButtons = document.querySelectorAll('.filter-button');
-    const totalAttendanceHoursCard = document.getElementById('totalAttendanceHoursCard');
-    const totalOvertimeHoursCard = document.getElementById('totalOvertimeHoursCard');
-    const totalAbsenteesCard = document.getElementById('totalAbsenteesCard');
-    const topAbsenteesList = document.getElementById('topAbsenteesList');
-    const topMaxAttendanceList = document.getElementById('topMaxAttendanceList');
-    const topOvertimeList = document.getElementById('topOvertimeList');
-    const topAbsenteesPeriodDisplay = document.getElementById('topAbsenteesPeriodDisplay');
-    const topMaxAttendancePeriodDisplay = document.getElementById('topMaxAttendancePeriodDisplay');
-    const topOvertimePeriodDisplay = document.getElementById('topOvertimePeriodDisplay');
+    // ── Helper: update a card stat number ──────────────
+    function updateCardStat(cardEl, newValue) {
+        if (!cardEl) return;
+        const h3 = cardEl.querySelector('h3');
+        if (!h3) return;
+        // Fade out → update → fade in
+        h3.style.transition = 'opacity 0.2s';
+        h3.style.opacity    = '0';
+        setTimeout(() => {
+            h3.textContent  = newValue;
+            h3.style.opacity = '1';
+        }, 200);
+    }
 
+    // ── Main update function ───────────────────────────
     async function updateDashboardData(period) {
-        console.log(`Updating dashboard for period: ${period}`);
+        setActiveButton(period);
 
-        // Update active state of buttons by directly manipulating Tailwind classes
-        filterButtons.forEach(button => {
-            if (button.dataset.period === period) {
-                // Add active styles
-                button.classList.add('bg-red-600', 'text-white');
-                // Remove inactive styles
-                button.classList.remove('bg-white', 'text-[#417893]', 'hover:bg-red-100', 'hover:text-red-600');
-            } else {
-                // Add inactive styles
-                button.classList.add('bg-white', 'text-[#417893]', 'hover:bg-red-100', 'hover:text-red-600');
-                // Remove active styles
-                button.classList.remove('bg-red-600', 'text-white');
-            }
-        });
+        // Show skeleton loaders
+        showListSkeleton(topAbsenteesList);
+        showListSkeleton(topMaxAttendanceList);
+        showListSkeleton(topOvertimeList);
 
         try {
-            // Show a loading indicator by dimming the lists
-            if (topAbsenteesList) topAbsenteesList.classList.add('opacity-50', 'pointer-events-none');
-            if (topMaxAttendanceList) topMaxAttendanceList.classList.add('opacity-50', 'pointer-events-none');
-            if (topOvertimeList) topOvertimeList.classList.add('opacity-50', 'pointer-events-none');
+            const response = await fetch(`/attendance/get-dashboard-data/?period=${encodeURIComponent(period)}`);
 
-            // Fetch data from the Django backend
-            const response = await fetch(`/attendance/get-dashboard-data/?period=${period}`);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`Server returned HTTP ${response.status}`);
             }
+
             const data = await response.json();
 
-            // Update main cards
-            if (totalAttendanceHoursCard) totalAttendanceHoursCard.querySelector('h3').textContent = data.total_attendance_hours_all + ' hrs';
-            if (totalOvertimeHoursCard) totalOvertimeHoursCard.querySelector('h3').textContent = data.total_overtime_all + ' hrs';
-            if (totalAbsenteesCard) totalAbsenteesCard.querySelector('h3').textContent = data.total_absentees_count;
+            // Update stat cards with animation
+            updateCardStat(totalAttendanceHoursCard,
+                `${data.total_attendance_hours_all ?? '—'} hrs`);
+            updateCardStat(totalOvertimeHoursCard,
+                `${data.total_overtime_all ?? '—'} hrs`);
+            updateCardStat(totalAbsenteesCard,
+                data.total_absentees_count ?? '—');
 
-            // Update lists HTML
-            if (topAbsenteesList) topAbsenteesList.innerHTML = data.top_5_absentees_html;
-            if (topMaxAttendanceList) topMaxAttendanceList.innerHTML = data.top_5_max_attendance_html;
-            if (topOvertimeList) topOvertimeList.innerHTML = data.top_5_overtime_html;
+            // Update list HTML
+            if (topAbsenteesList)      topAbsenteesList.innerHTML      = data.top_5_absentees_html       || '<li class="py-3 text-center" style="color:var(--clr-text-muted);">No data</li>';
+            if (topMaxAttendanceList)  topMaxAttendanceList.innerHTML  = data.top_5_max_attendance_html  || '<li class="py-3 text-center" style="color:var(--clr-text-muted);">No data</li>';
+            if (topOvertimeList)       topOvertimeList.innerHTML       = data.top_5_overtime_html        || '<li class="py-3 text-center" style="color:var(--clr-text-muted);">No data</li>';
 
-            // Update period displays in titles
-            const periodDisplayText = period.charAt(0).toUpperCase() + period.slice(1);
-            if (topAbsenteesPeriodDisplay) topAbsenteesPeriodDisplay.textContent = `Current ${periodDisplayText}`;
-            if (topMaxAttendancePeriodDisplay) topMaxAttendancePeriodDisplay.textContent = `Total Hours Current ${periodDisplayText}`;
-            if (topOvertimePeriodDisplay) topOvertimePeriodDisplay.textContent = `Current ${periodDisplayText}`;
-
-            console.log("Dashboard data updated successfully.");
+            // Update period label in section headers
+            const label = period.charAt(0).toUpperCase() + period.slice(1);
+            if (topAbsenteesPeriodDisplay)      topAbsenteesPeriodDisplay.textContent      = label;
+            if (topMaxAttendancePeriodDisplay)  topMaxAttendancePeriodDisplay.textContent  = label;
+            if (topOvertimePeriodDisplay)       topOvertimePeriodDisplay.textContent       = label;
 
         } catch (error) {
-            console.error('Error fetching dashboard data:', error);
-            localDisplayMessage('Failed to load dashboard data. Please try again.', 'error');
-        } finally {
-            // Hide loading indicator
-            if (topAbsenteesList) topAbsenteesList.classList.remove('opacity-50', 'pointer-events-none');
-            if (topMaxAttendanceList) topMaxAttendanceList.classList.remove('opacity-50', 'pointer-events-none');
-            if (topOvertimeList) topOvertimeList.classList.remove('opacity-50', 'pointer-events-none');
+            console.error('Dashboard fetch error:', error);
+            window.showToast?.(`Failed to refresh dashboard: ${error.message}`, 'error');
+
+            // Restore lists to show error state
+            const errMsg = '<li class="py-3 text-center" style="color:var(--clr-error);">Could not load data</li>';
+            if (topAbsenteesList)     topAbsenteesList.innerHTML     = errMsg;
+            if (topMaxAttendanceList) topMaxAttendanceList.innerHTML = errMsg;
+            if (topOvertimeList)      topOvertimeList.innerHTML      = errMsg;
         }
     }
 
-    // Attach event listeners to filter buttons
+    // ── Attach click listeners ─────────────────────────
     filterButtons.forEach(button => {
         button.addEventListener('click', function () {
-            const period = this.dataset.period;
-            updateDashboardData(period);
+            updateDashboardData(this.dataset.period);
         });
     });
 
-    // Initial load for the dashboard with the default period (e.g., 'month')
-    // This assumes your Django view passes an initial 'filter_period' to set the active button on load.
-    // If not, you might need to manually trigger it with a default:
-    // updateDashboardData('month'); // You might uncomment this if your Django view doesn't set an initial filter_period
 });

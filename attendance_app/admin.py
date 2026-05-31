@@ -28,7 +28,7 @@ class AttendanceRecordAdmin(admin.ModelAdmin):
     """
     Customizes the display of the AttendanceRecord model in the Django admin.
     """
-    list_display = ('employee', 'date', 'time')
+    list_display = ('employee', 'date', 'check_in_time', 'attendance_type')
     list_filter = ('date', 'employee')
     search_fields = ('employee__name', 'employee__employee_id')  # Search by related employee's name or ID
     date_hierarchy = 'date'  # Adds a date drill-down navigation

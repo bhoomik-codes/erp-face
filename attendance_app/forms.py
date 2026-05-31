@@ -7,8 +7,8 @@ from .models import Employee, LocationSetting, CustomUser
 class EmployeeForm(forms.ModelForm):
     """
     Form for creating and updating Employee records.
-    Handles 'name', 'employee_id', 'photo', 'role', and 'team_members'.
-    The 'photo' field is now a regular FileInput that we'll handle manually in the view.
+    Handles 'name', 'employee_id', 'photo', 'role', and other profile fields.
+    The 'photo' field is handled as a regular file upload in the view.
     """
     # Override the photo field to handle it as a regular file upload
     photo = forms.FileField(
@@ -21,8 +21,8 @@ class EmployeeForm(forms.ModelForm):
 
     class Meta:
         model = Employee
-        # We will not include 'photo' in the fields because we will handle its saving manually in the view
-        fields = ['name', 'employee_id', 'role', 'team_members']
+        # 'photo' is handled manually in the view; 'face_encoding' is set programmatically
+        fields = ['name', 'employee_id', 'email', 'phone', 'role', 'department', 'shift', 'joining_date', 'status']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline',
@@ -32,36 +32,52 @@ class EmployeeForm(forms.ModelForm):
                 'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline',
                 'placeholder': 'Unique Employee ID'
             }),
+            'email': forms.EmailInput(attrs={
+                'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline',
+                'placeholder': 'employee@example.com'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline',
+                'placeholder': '+91 9876543210'
+            }),
             'role': forms.Select(attrs={
                 'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline',
             }),
-            # IMPORTANT CHANGE: Always render team_members as SelectMultiple, but make it hidden
-            'team_members': forms.SelectMultiple(attrs={
-                'class': 'hidden'  # This class will hide the default Django widget
+            'department': forms.Select(attrs={
+                'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline',
+            }),
+            'shift': forms.Select(attrs={
+                'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline',
+            }),
+            'joining_date': forms.DateInput(attrs={
+                'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline',
+                'type': 'date'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline',
             }),
         }
-        labels = {
-            'name': 'Full Name',
-            'employee_id': 'Employee ID',
-            'photo': 'Profile Photo',
-            'role': 'Role',
-            'team_members': 'Team Members',
-        }
-        help_texts = {
-            'photo': 'Upload a clear photo of the employee\'s face for recognition.',
-            'role': 'Select the employee\'s role within the company.',
-            'team_members': 'Select developers who work under this Team Leader. (Only applicable for Team Leaders)',
-        }
+
+    team_members = forms.ModelMultipleChoiceField(
+        queryset=Employee.objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={'id': 'id_team_members', 'style': 'display:none;'})
+    )
+
+    def save(self, commit=True):
+        employee = super().save(commit=False)
+        if commit:
+            employee.save()
+            if 'team_members' in self.cleaned_data:
+                if employee.pk:
+                    Employee.objects.filter(manager=employee).update(manager=None)
+                for member in self.cleaned_data['team_members']:
+                    member.manager = employee
+                    member.save()
+        return employee
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Dynamically set the queryset for team_members
-        self.fields['team_members'].queryset = Employee.objects.filter(
-            role__in=['TRAINEE', 'JUNIOR_DEVELOPER', 'SENIOR_DEVELOPER']
-        ).order_by('name')
-
-        self.fields['team_members'].required = False  # Make it not required as it's optional
-
         # New logic to make the photo optional during an update
         # `self.instance` will be set if this is an update form
         if self.instance and self.instance.pk and self.instance.photo:
@@ -70,7 +86,7 @@ class EmployeeForm(forms.ModelForm):
     def clean_employee_id(self):
         # Custom validation for employee_id to handle updates
         employee_id = self.cleaned_data.get('employee_id')
-        if not self.instance:  # If creating a new employee
+        if not self.instance or not self.instance.pk:  # If creating a new employee
             if Employee.objects.filter(employee_id=employee_id).exists():
                 raise forms.ValidationError("An employee with this ID already exists.")
         else:  # If updating an existing employee

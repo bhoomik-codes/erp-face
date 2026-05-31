@@ -3,10 +3,11 @@
 {% load widget_tweaks %} {# Load widget_tweaks to add classes to form fields #}
 {% with current_page='view_attendance' %}{% endwith %}
 
-
-{% block title %}Attendance Report - VIDHEMA{% endblock %}
-
+{% block title %}Attendance Report — VIDHEMA ERP{% endblock %}
 {% block page_heading %}Attendance Report{% endblock %}
+
+
+
 
 {% block head_extra %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -20,31 +21,31 @@
 {% block content %}
     {% with current_page='view_attendance' %}
         <div class="form-container mx-auto p-4">
-            <form id="attendanceFilterForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <form id="attendanceFilterForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div class="flex-1 min-w-[200px]">
-                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date:</label>
+                    <label for="start_date" class="block text-sm font-semibold mb-1" style="color:var(--clr-text);">Start Date</label>
                     <input type="date"
                            id="start_date"
                            name="start_date"
                            value="{{ filter_start_date }}"
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-red focus:ring-primary-red p-2">
+                           style="width:100%;padding:.6rem .875rem;border:1.5px solid var(--clr-border);border-radius:8px;font-family:Inter,sans-serif;font-size:.9rem;color:var(--clr-text);outline:none;">
                 </div>
 
                 <div class="flex-1 min-w-[200px]">
-                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">End Date:</label>
+                    <label for="end_date" class="block text-sm font-semibold mb-1" style="color:var(--clr-text);">End Date</label>
                     <input type="date"
                            id="end_date"
                            name="end_date"
                            value="{{ filter_end_date }}"
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-red focus:ring-primary-red p-2">
+                           style="width:100%;padding:.6rem .875rem;border:1.5px solid var(--clr-border);border-radius:8px;font-family:Inter,sans-serif;font-size:.9rem;color:var(--clr-text);outline:none;">
                 </div>
 
                 <div class="flex-1 min-w-[200px]">
-                    <label for="employee_ids" class="block text-sm font-medium text-gray-700 mb-1">Filter by
-                        Employees:</label>
+                    <label for="employee_ids" class="block text-sm font-semibold mb-1" style="color:var(--clr-text);">Filter by Employees</label>
                     <select id="employee_ids"
-                            name="employee_ids[]" {# Use [] to allow multiple selections #}
-                            class="employee-select w-full rounded-md border-gray-300 shadow-sm focus:border-primary-red focus:ring-primary-red p-2"
+                            name="employee_ids[]"
+                            class="employee-select w-full"
+                            style="padding:.6rem .875rem;border:1.5px solid var(--clr-border);border-radius:8px;font-family:Inter,sans-serif;font-size:.9rem;color:var(--clr-text);outline:none;"
                             multiple="multiple">
                         {% if employees %}
                             {% for emp in employees %}
@@ -54,31 +55,28 @@
                                 </option>
                             {% endfor %}
                         {% else %}
-                            <option disabled>No employees loaded (Check view context)</option>
+                            <option disabled>No employees found</option>
                         {% endif %}
                     </select>
                 </div>
 
                 <div class="flex-1 min-w-[200px]">
-                    <label for="total_hours_lt" class="block text-sm font-medium text-gray-700 mb-1">Worked Less Than
-                        (Hours):</label>
+                    <label for="total_hours_lt" class="block text-sm font-semibold mb-1" style="color:var(--clr-text);">Worked Less Than (hrs)</label>
                     <input type="number"
                            id="total_hours_lt"
                            name="total_hours_lt"
                            value="{{ filter_total_hours_lt }}"
                            step="0.01" min="0"
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-red focus:ring-primary-red p-2"
+                           style="width:100%;padding:.6rem .875rem;border:1.5px solid var(--clr-border);border-radius:8px;font-family:Inter,sans-serif;font-size:.9rem;color:var(--clr-text);outline:none;"
                            placeholder="e.g., 8.0">
                 </div>
 
                 <div class="flex items-end gap-3 mt-auto">
-                    <button type="submit"
-                            class="filter-button bg-secondary-blue text-dark-blue-gray font-semibold md-50 px-4 py-2 rounded-md hover:bg-primary-red-dark">
-                        <i class="fa-solid fa-filter mr-2"></i> Apply Filters
+                    <button type="submit" class="apply-filter-btn btn-md" id="btn-apply-filters">
+                        <i class="fa-solid fa-filter"></i> Apply Filters
                     </button>
-                    <button type="button" onclick="clearFilters()"
-                            class="clear-filters-btn bg-primary-red text-dark-blue-gray font-semibold md-50 px-4 py-2 rounded-md hover:bg-danger-dark">
-                        <i class="fa-solid fa-times-circle mr-2"></i> Clear Filters
+                    <button type="button" onclick="clearFilters()" class="clear-filter-btn btn-md" id="btn-clear-filters">
+                        <i class="fa-solid fa-xmark"></i> Clear
                     </button>
                 </div>
             </form>
@@ -98,7 +96,7 @@
             </div>
 
 
-            <div class="overflow-x-auto overflow-y-auto bg-white rounded-xl shadow-md mb-8 h-[400px]">
+            <div class="attendance-table-container overflow-x-auto overflow-y-auto" style="max-height:450px;">
                 <table class="min-w-full divide-y divide-gray-200" id="attendanceReportTable">
                     <thead class="bg-gray-50">
                     <tr>
@@ -146,23 +144,20 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="attendanceTableBody">
                     {# This partial expects 'attendance_records' which is the summarized_data from the view #}
-                    {% include 'attendance_app/partials/attendance_table_body.html' with attendance_records=attendance_records only %}
+                    {% include 'attendance_app/partials/attendance_table_body.html' %}
                     </tbody>
                 </table>
             </div>
 
-            <div class="mt-8 flex justify-center gap-4 report-links">
-                <a href="{% url 'attendance_app:mark_attendance' %}"
-                   class="inline-flex items-center">
-                    <i class="fa-solid fa-camera mr-2"></i> Mark Attendance
+            <div class="mt-6 flex justify-center gap-3 flex-wrap">
+                <a href="{% url 'attendance_app:mark_attendance' %}" class="back-btn btn-md" id="link-mark-attendance">
+                    <i class="fa-solid fa-camera"></i> Mark Attendance
                 </a>
-                <a href="{% url 'attendance_app:register_employee' %}"
-                   class="inline-flex items-center">
-                    <i class="fa-solid fa-user-plus mr-2"></i> Register Employee
+                <a href="{% url 'attendance_app:register_employee' %}" class="add-employee-btn btn-md" id="link-register">
+                    <i class="fa-solid fa-user-plus"></i> Register Employee
                 </a>
-                <a href="{% url 'attendance_app:employee_list' %}"
-                   class="inline-flex items-center">
-                    <i class="fa-solid fa-users mr-2"></i> View Employees
+                <a href="{% url 'attendance_app:employee_list' %}" class="edit-btn btn-md" id="link-employee-list">
+                    <i class="fa-solid fa-users"></i> View Employees
                 </a>
             </div>
         </div>

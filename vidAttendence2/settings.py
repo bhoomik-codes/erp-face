@@ -26,12 +26,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 AUTH_USER_MODEL = 'attendance_app.CustomUser'
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(8v!fh0!esomt_^a_+vhvsbqd#n2t-0ik+0)n&oe@s6p^#0zao'
+# Read from environment variable; fall back to insecure dev key only when not provided.
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-(8v!fh0!esomt_^a_+vhvsbqd#n2t-0ik+0)n&oe@s6p^#0zao'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
 
@@ -46,11 +50,12 @@ INSTALLED_APPS = [
     'attendance_app',
     'corsheaders',
     'widget_tweaks',
-    'djongo',
+    # 'djongo',  # Removed: app uses SQLite, not MongoDB
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Must be before CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -58,6 +63,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# CORS settings — restrict to trusted origins in production
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all only in dev mode
 
 ROOT_URLCONF = 'vidAttendence2.urls'
 

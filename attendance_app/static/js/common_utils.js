@@ -1,151 +1,164 @@
 // attendance_app/static/js/common_utils.js
+// --------------------------------------------------
+// Shared utilities used across the admin interface.
+// --------------------------------------------------
 
 /**
- * Displays a message to the user in a specified messages div.
- * @param {HTMLElement} messagesDiv - The div element to display messages in.
- * @param {string} message - The message to display.
- * @param {string} type - 'success' or 'error'.
+ * Displays a message using the global toast system.
+ * Maintains backward compatibility with the old `messagesDiv` signature.
+ *
+ * @param {HTMLElement|null} messagesDiv - Legacy parameter (ignored; kept for compat).
+ * @param {string}  message - Text to display.
+ * @param {string}  type    - 'success' | 'error' | 'warning' | 'info'
  */
 function displayMessage(messagesDiv, message, type) {
-    if (messagesDiv) {
-        // Create a new div element for the message to avoid XSS if message contains HTML
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('p-3', 'rounded-md', 'mb-4', 'text-center');
-        if (type === 'success') {
-            messageElement.classList.add('bg-green-100', 'text-green-700');
-        } else {
-            messageElement.classList.add('bg-red-100', 'text-red-700');
-        }
-        messageElement.textContent = message; // Use textContent to prevent XSS
+    const toastType = type === 'success' ? 'success'
+                    : type === 'error'   ? 'error'
+                    : type === 'warning' ? 'warning'
+                    : 'info';
 
-        // Clear any existing messages before adding the new one
-        messagesDiv.innerHTML = '';
-        messagesDiv.appendChild(messageElement);
-
-        setTimeout(() => {
-            if (messagesDiv.contains(messageElement)) {
-                messagesDiv.removeChild(messageElement);
-            }
-        }, 5000); // Message disappears after 5 seconds
+    if (typeof window.showToast === 'function') {
+        window.showToast(message, toastType);
     } else {
-        console.warn("Messages div not found for general messages. Message: ", message);
+        // Fallback: console log if toast.js hasn't loaded yet
+        console.info(`[${toastType.toUpperCase()}] ${message}`);
+        // Try a simple alert for critical errors only
+        if (toastType === 'error') {
+            // Silently fail — don't disrupt UX with alert()
+        }
     }
 }
 
-// Make displayMessage globally accessible
+// Make globally accessible (legacy usage)
 window.displayMessage = displayMessage;
 
+
 /**
- * Initializes generic delete confirmation modal logic for employee deletion.
- * Assumes certain DOM elements exist with specific IDs/data attributes:
- * - Elements with class 'delete-btn'
- * - Element with ID 'deleteModal'
- * - Element with ID 'modalEmployeeName'
- * - Element with ID 'modalEmployeeId'
- * - Element with ID 'confirmDeleteBtn'
- * - Element with ID 'cancelDeleteBtn'
- * - Element with ID 'messages' (for displaying messages)
- * - Element with class 'employee-table tbody' (for checking empty table)
- * @param {string} csrfToken - The CSRF token for AJAX requests.
+ * Initialises the delete-confirmation modal for employee deletion via AJAX.
+ *
+ * Requires in DOM:
+ *   - Buttons with class 'delete-btn' and data-employee-id / data-employee-name
+ *   - #deleteModal, #modalEmployeeName, #modalEmployeeId
+ *   - #confirmDeleteBtn, #cancelDeleteBtn
+ *
+ * @param {string} csrfToken - Django CSRF token.
  */
-export function initializeDeleteModal(csrfToken) {
-    const deleteButtons = document.querySelectorAll('.delete-btn');
-    const deleteModal = document.getElementById('deleteModal');
+function initializeDeleteModal(csrfToken) {
+    window.initializeDeleteModal = initializeDeleteModal;
+    const deleteButtons     = document.querySelectorAll('.delete-btn');
+    const deleteModal       = document.getElementById('deleteModal');
     const modalEmployeeName = document.getElementById('modalEmployeeName');
-    const modalEmployeeId = document.getElementById('modalEmployeeId');
-    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-    const messagesDiv = document.getElementById('messages'); // Main messages div
+    const modalEmployeeId   = document.getElementById('modalEmployeeId');
+    const confirmDeleteBtn  = document.getElementById('confirmDeleteBtn');
+    const cancelDeleteBtn   = document.getElementById('cancelDeleteBtn');
 
     let employeeIdToDelete = null;
 
-    // Add click listeners to all delete buttons
+    // ── Open modal on delete button click ──────────────
     deleteButtons.forEach(button => {
         button.addEventListener('click', function () {
             employeeIdToDelete = this.dataset.employeeId;
             const employeeName = this.dataset.employeeName;
 
-            if (modalEmployeeName && modalEmployeeId) {
-                modalEmployeeName.textContent = employeeName;
-                modalEmployeeId.textContent = employeeIdToDelete;
-            }
-            if (deleteModal) {
-                deleteModal.style.display = 'flex'; // Show modal
-            }
+            if (modalEmployeeName) modalEmployeeName.textContent = employeeName;
+            if (modalEmployeeId)   modalEmployeeId.textContent   = employeeIdToDelete;
+            if (deleteModal)       deleteModal.style.display = 'flex';
         });
     });
 
-    // Handle confirm delete button click
+    // ── Confirm delete ─────────────────────────────────
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener('click', async function () {
             if (!employeeIdToDelete) {
-                displayMessage(messagesDiv, 'Error: No employee selected for deletion.', 'error');
+                window.showToast?.('No employee selected for deletion.', 'error');
                 return;
             }
+
+            // Button loading state
+            const originalHTML = confirmDeleteBtn.innerHTML;
+            confirmDeleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
+            confirmDeleteBtn.disabled  = true;
 
             try {
                 const response = await fetch(`/attendance/employee/delete/${employeeIdToDelete}/`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': csrfToken,
-                        'Content-Type': 'application/json'
+                        'X-CSRFToken':  csrfToken,
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({}) // Send an empty JSON body
+                    body: JSON.stringify({}),
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({message: 'Failed to parse error response.'}));
-                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    throw new Error(errorData.message || `HTTP ${response.status}`);
                 }
 
                 const data = await response.json();
+
                 if (data.status === 'success') {
-                    displayMessage(messagesDiv, data.message, 'success');
-                    // Remove the row from the table
-                    const row = document.querySelector(`button[data-employee-id="${employeeIdToDelete}"]`).closest('tr');
+                    window.showToast?.(
+                        data.message || 'Employee deleted successfully.',
+                        'success'
+                    );
+
+                    // Remove the table row
+                    const row = document.querySelector(`button[data-employee-id="${employeeIdToDelete}"]`)?.closest('tr');
                     if (row) {
-                        row.remove();
+                        row.style.transition = 'opacity 0.3s, transform 0.3s';
+                        row.style.opacity    = '0';
+                        row.style.transform  = 'translateX(-12px)';
+                        setTimeout(() => row.remove(), 300);
                     }
-                    // If the table becomes empty, display the "No employees" message
-                    const tbody = document.querySelector('.employee-table tbody');
-                    if (tbody && tbody.children.length === 0) {
-                        const noRecordsRow = document.createElement('tr');
-                        noRecordsRow.innerHTML = '<td colspan="4" class="text-center py-4 text-gray-500">No employees registered yet.</td>';
-                        tbody.appendChild(noRecordsRow);
-                    }
+
+                    // Empty-state row if table is now empty
+                    setTimeout(() => {
+                        const tbody = document.querySelector('#employeeTableBody') || document.querySelector('.employee-table tbody');
+                        if (tbody) {
+                            const visibleRows = tbody.querySelectorAll('tr:not([style*="opacity: 0"])');
+                            if (visibleRows.length === 0) {
+                                tbody.innerHTML = `
+                                    <tr id="emptyRow">
+                                        <td colspan="5" class="text-center py-12" style="color:var(--clr-text-muted);">
+                                            <i class="fa-solid fa-users-slash text-3xl mb-3 block" style="opacity:.35;"></i>
+                                            No employees registered.
+                                        </td>
+                                    </tr>`;
+                            }
+                        }
+                    }, 350);
+
                 } else {
-                    displayMessage(messagesDiv, data.message, 'error');
+                    window.showToast?.(data.message || 'Deletion failed.', 'error');
                 }
+
             } catch (error) {
-                console.error('Error deleting employee:', error);
-                displayMessage(messagesDiv, 'An error occurred during deletion: ' + error.message, 'error');
+                console.error('Delete error:', error);
+                window.showToast?.(`Deletion failed: ${error.message}`, 'error');
             } finally {
-                if (deleteModal) {
-                    deleteModal.style.display = 'none'; // Hide modal
-                }
-                employeeIdToDelete = null; // Clear selected employee
+                if (deleteModal) deleteModal.style.display = 'none';
+                confirmDeleteBtn.innerHTML = originalHTML;
+                confirmDeleteBtn.disabled  = false;
+                employeeIdToDelete         = null;
             }
         });
     }
 
-    // Handle cancel delete button click
+    // ── Cancel ─────────────────────────────────────────
     if (cancelDeleteBtn) {
-        cancelDeleteBtn.addEventListener('click', function () {
-            if (deleteModal) {
-                deleteModal.style.display = 'none'; // Hide modal
-            }
-            employeeIdToDelete = null; // Clear selected employee
+        cancelDeleteBtn.addEventListener('click', () => {
+            if (deleteModal) deleteModal.style.display = 'none';
+            employeeIdToDelete = null;
         });
     }
 
-    // Close modal if the user clicks outside of it
+    // ── Click-outside to close ─────────────────────────
     if (deleteModal) {
-        window.addEventListener('click', function (event) {
-            if (event.target === deleteModal) {
+        deleteModal.addEventListener('click', (e) => {
+            if (e.target === deleteModal) {
                 deleteModal.style.display = 'none';
                 employeeIdToDelete = null;
             }
         });
     }
 }
-

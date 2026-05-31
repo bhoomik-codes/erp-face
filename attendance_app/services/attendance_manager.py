@@ -8,7 +8,7 @@ from django.db.models import Max, Q, Count, Sum
 from django.utils import timezone
 from geopy.distance import geodesic
 
-from ..models import AttendanceRecord, Employee, LocationSetting, LeaveHistory, Break
+from ..models import AttendanceRecord, Employee, LocationSetting, LeaveHistory
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class AttendanceManager:
         record_kwargs = {
             'employee': employee,
             'date': timezone.localdate(),
-            'time': timezone.localtime().time(),
+            'check_in_time': timezone.localtime().time(),
             'attendance_type': attendance_type,
             'remarks': remarks
         }
@@ -103,12 +103,12 @@ class AttendanceManager:
             # Fix: Ensure all datetime objects are timezone-aware for comparison
             # The database stores naive datetimes by default, so we need to make them aware.
             # `timezone.localtime()` handles converting a naive datetime to the correct timezone.
-            start_dt_naive = datetime.combine(target_date, in_record.time)
+            start_dt_naive = datetime.combine(target_date, in_record.check_in_time)
             start_dt = timezone.make_aware(start_dt_naive)
 
             end_dt = None
             if out_record:
-                end_dt_naive = datetime.combine(target_date, out_record.time)
+                end_dt_naive = datetime.combine(target_date, out_record.check_out_time)
                 end_dt = timezone.make_aware(end_dt_naive)
                 has_out = True
             elif target_date < timezone.localdate():
@@ -176,7 +176,7 @@ class AttendanceManager:
                 'employee_name': record.employee.name,
                 'employee_id': record.employee.employee_id,
                 'date': record.date.strftime('%Y-%m-%d'),
-                'in_time': record.time.strftime('%I:%M %p'),
+                'in_time': record.check_in_time.strftime('%I:%M %p') if record.check_in_time else '-',
                 'breaks': [],  # Break tracking not available in SQLite
                 'out_record': AttendanceRecord.objects.filter(employee=record.employee, date=record.date,
                                                               attendance_type='OUT').first(),
@@ -244,7 +244,7 @@ class AttendanceManager:
             # Fix: Ensure `record.time` is a time object and can be compared with other time objects.
             # The database returns a time object, which is timezone-naive.
             # This comparison is safe as both are naive time objects.
-            if record.time > AttendanceManager.IN_TIME_END:
+            if record.check_in_time > AttendanceManager.IN_TIME_END:
                 trends_data[key]['late'] += 1
             else:
                 trends_data[key]['on_time'] += 1
